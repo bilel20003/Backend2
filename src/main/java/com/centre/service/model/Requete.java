@@ -23,15 +23,15 @@ public class Requete {
     // Relations avec les autres entités
     @ManyToOne
     @JoinColumn(name = "client_id", nullable = false)  // Le client crée la requête
-    private Personne client;
+    private UserInfo client;
 
     @ManyToOne
     @JoinColumn(name = "guichetier_id", nullable = false)  // Le guichetier reçoit et traite la requête
-    private Personne guichetier;
+    private UserInfo guichetier;
 
     @ManyToOne
     @JoinColumn(name = "technicien_id")  // Le technicien peut être assigné à la requête
-    private Personne technicien;
+    private UserInfo technicien;
 
     // Getters et Setters
     public Long getId() {
@@ -90,27 +90,27 @@ public class Requete {
         this.date = date;
     }
 
-    public Personne getClient() {
+    public UserInfo getClient() {
         return client;
     }
 
-    public void setClient(Personne client) {
+    public void setClient(UserInfo client) {
         this.client = client;
     }
 
-    public Personne getGuichetier() {
+    public UserInfo getGuichetier() {
         return guichetier;
     }
 
-    public void setGuichetier(Personne guichetier) {
+    public void setGuichetier(UserInfo guichetier) {
         this.guichetier = guichetier;
     }
 
-    public Personne getTechnicien() {
+    public UserInfo getTechnicien() {
         return technicien;
     }
 
-    public void setTechnicien(Personne technicien) {
+    public void setTechnicien(UserInfo technicien) {
         this.technicien = technicien;
     }
 }

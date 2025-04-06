@@ -1,8 +1,8 @@
-package com.centre.service.controller;
+package com.centre.service.rest;
 
-import com.centre.service.model.Personne;
+import com.centre.service.repository.UserInfoRepository;
 import com.centre.service.model.Rdv;
-import com.centre.service.repository.PersonneRepository;
+import com.centre.service.model.UserInfo;
 import com.centre.service.repository.RdvRepository;
 import com.centre.service.service.RdvService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +21,7 @@ public class RdvController {
     private RdvService rdvService;
 
     @Autowired
-    private PersonneRepository personneRepository;
+    private UserInfoRepository personneRepository;
 
     @Autowired
     private RdvRepository rdvRepository;
@@ -66,14 +66,14 @@ public class RdvController {
             newRdv.setDateEnvoi(new Date());
 
             // Récupérer la personne (client, guichetier) en fonction de leur ID
-            Optional<Personne> clientOpt = personneRepository.findById(newRdv.getClient().getId());
+            Optional<UserInfo> clientOpt = personneRepository.findById(newRdv.getClient().getId());
             if (clientOpt.isPresent()) {
                 newRdv.setClient(clientOpt.get());
             } else {
                 return ResponseEntity.status(404).body("Client non trouvé.");
             }
 
-            Optional<Personne> guichetierOpt = personneRepository.findById(newRdv.getGuichetier().getId());
+            Optional<UserInfo> guichetierOpt = personneRepository.findById(newRdv.getGuichetier().getId());
             if (guichetierOpt.isPresent()) {
                 newRdv.setGuichetier(guichetierOpt.get());
             } else {

@@ -21,11 +21,11 @@ public class Rdv {
     // Relations avec les autres entités
     @ManyToOne
     @JoinColumn(name = "client_id", nullable = false)  // Le client crée le rendez-vous
-    private Personne client;
+    private UserInfo client;
 
     @ManyToOne
     @JoinColumn(name = "guichetier_id", nullable = false)  // Le guichetier reçoit et traite le rendez-vous
-    private Personne guichetier;
+    private UserInfo guichetier;
 
     // Getters et Setters
     public Long getId() {
@@ -76,19 +76,19 @@ public class Rdv {
         this.dateEnvoi = dateEnvoi;
     }
 
-    public Personne getClient() {
+    public UserInfo getClient() {
         return client;
     }
 
-    public void setClient(Personne client) {
+    public void setClient(UserInfo client) {
         this.client = client;
     }
 
-    public Personne getGuichetier() {
+    public UserInfo getGuichetier() {
         return guichetier;
     }
 
-    public void setGuichetier(Personne guichetier) {
+    public void setGuichetier(UserInfo guichetier) {
         this.guichetier = guichetier;
     }
 }

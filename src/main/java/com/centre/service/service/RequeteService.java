@@ -1,10 +1,10 @@
 package com.centre.service.service;
 
-import com.centre.service.model.Requete;
 import com.centre.service.model.EtatRequete;
-import com.centre.service.model.Personne;
+import com.centre.service.model.Requete;
+import com.centre.service.model.UserInfo;
 import com.centre.service.repository.RequeteRepository;
-import com.centre.service.repository.PersonneRepository;
+import com.centre.service.repository.UserInfoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,10 +18,10 @@ public class RequeteService {
     private RequeteRepository requeteRepository;
 
     @Autowired
-    private PersonneRepository personneRepository;
+    private UserInfoRepository personneRepository;
 
     // Créer une nouvelle requête
-    public Requete creerRequete(Personne client, Personne guichetier, String type, String objet, String description) {
+    public Requete creerRequete(UserInfo client, UserInfo guichetier, String type, String objet, String description) {
         Requete requete = new Requete();
         requete.setClient(client);
         requete.setGuichetier(guichetier);
@@ -44,12 +44,12 @@ public class RequeteService {
 
         Requete requete = optionalRequete.get();
 
-        Optional<Personne> optionalTechnicien = personneRepository.findById(technicienId);
+        Optional<UserInfo> optionalTechnicien = personneRepository.findById(technicienId);
         if (!optionalTechnicien.isPresent() || !optionalTechnicien.get().getRole().equals("TECHNICIEN")) {
             throw new Exception("Technicien non trouvé ou rôle incorrect.");
         }
 
-        Personne technicien = optionalTechnicien.get();
+        UserInfo technicien = optionalTechnicien.get();
         requete.setTechnicien(technicien);
 
         return requeteRepository.save(requete);

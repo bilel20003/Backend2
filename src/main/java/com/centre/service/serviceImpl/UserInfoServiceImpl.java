@@ -58,6 +58,7 @@ public class UserInfoServiceImpl implements UserInfoService {
         userInfo.setStatus("false");
         userInfo.setEmail(userInfo.getEmail().toLowerCase());
         userInfo.setIsDeletable("true");
+        userInfo.setRole(userInfo.getRole());
 
         // Enregistrez l'utilisateur dans la base de données
         userInfoRepository.save(userInfo);

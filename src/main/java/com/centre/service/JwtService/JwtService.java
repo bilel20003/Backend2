@@ -11,7 +11,7 @@ import java.security.Key; import java.util.Date; import java.util.HashMap; impor
 
 @Component 
 public class JwtService { 
-    public static final String SECRET = "fhijzerbfuizfhiz+684";
+    public static final String SECRET = "jknhgjkldsnhgjklsdnhjkldnhgsnhopznhopznenzthoiunzeiugbnizebtioezrbgyieobgue"; // Remplacez par une clé valide
 
     public String generateToken(String userName){
 	    Map<String, Object> claims = new HashMap<>();

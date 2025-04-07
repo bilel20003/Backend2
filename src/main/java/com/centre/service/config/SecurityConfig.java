@@ -23,54 +23,53 @@ import com.centre.service.JwtService.UserInfoService;
 import com.centre.service.filter.JwtAuthFilter; 
 
 
-@Configuration @EnableWebSecurity @EnableMethodSecurity 
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
-@Autowired
-private JwtAuthFilter  authFilter;
+    @Autowired
+    private JwtAuthFilter authFilter;
 
-@Bean
-@Primary
-public UserDetailsService userDetailsService() {
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return new UserInfoService(); // Assurez-vous que cela ne crée pas de boucle
+    }
 
-    return new UserInfoService();
-}
-
-@Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http.cors().configurationSource(request -> new CorsConfiguration().applyPermitDefaultValues())
-        .and()
-        .csrf().disable() // Désactiver CSRF pour le moment
-        .authorizeHttpRequests()
-        .requestMatchers("/api/**","/api/personnes/login").permitAll()
-        .and()
-        .authorizeHttpRequests().requestMatchers("/**").authenticated()
-        .and()
-        .exceptionHandling()
-        .and()
-        .sessionManagement()
-        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        .and()
-        .authenticationProvider(authenticationProvider())
-        .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class);
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.cors().configurationSource(request -> new CorsConfiguration().applyPermitDefaultValues())
+            .and()
+            .csrf().disable()
+            .authorizeHttpRequests()
+            .requestMatchers("/api/**", "/api/personnes/login").permitAll()
+            .anyRequest().authenticated()
+            .and()
+            .exceptionHandling()
+            .and()
+            .sessionManagement()
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
+            .authenticationProvider(authenticationProvider())
+            .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
-   
-}
+    }
 
-@Bean
-public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();  // Encodage du mot de passe
-}
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
-public AuthenticationProvider authenticationProvider(){
-    DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-    authenticationProvider.setUserDetailsService(userDetailsService());
-    authenticationProvider.setPasswordEncoder(passwordEncoder());
-    return authenticationProvider;
-}
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+        authenticationProvider.setUserDetailsService(userDetailsService());
+        authenticationProvider.setPasswordEncoder(passwordEncoder());
+        return authenticationProvider;
+    }
 
-@Bean
-public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-    return config.getAuthenticationManager();
-}
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
 }

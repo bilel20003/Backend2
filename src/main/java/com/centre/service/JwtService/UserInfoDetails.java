@@ -1,8 +1,11 @@
 package com.centre.service.JwtService;
+
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.centre.service.model.UserInfo;
@@ -15,9 +18,12 @@ public class UserInfoDetails implements UserDetails {
     private List<GrantedAuthority> authorities;
 
     public UserInfoDetails(UserInfo userInfo) {
-        this.name = userInfo.getName();
+        this.name = userInfo.getEmail(); // utilise bien l'email comme username
         this.password = userInfo.getPassword();
         this.status = userInfo.getStatus();
+        this.authorities = Collections.singletonList(
+            new SimpleGrantedAuthority("ROLE_" + userInfo.getRole().name()) // ex: ROLE_ADMIN
+        );
     }
 
     @Override
@@ -39,27 +45,23 @@ public class UserInfoDetails implements UserDetails {
         return status;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
     @Override
     public boolean isAccountNonExpired() {
-        return true; // Compte non expiré par défaut
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // Compte non bloqué par défaut
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // Informations d'identification non expirées par défaut
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return "true".equalsIgnoreCase(status); // Compte activé si le statut est "true"
+        return "true".equalsIgnoreCase(status);
     }
 }

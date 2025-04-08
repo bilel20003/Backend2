@@ -12,5 +12,11 @@ public interface UserInfoService {
     ResponseEntity<?> addNewAppuser(UserInfo UserInfo);
 
     ResponseEntity<?> login(AuthRequest authRequest);
+
+    ResponseEntity<?> getAllAppuser();
     
+    ResponseEntity<?> updateAppuser(Long id, UserInfo userInfo);
+
+    ResponseEntity<?> deleteAppuser(Long id);
+
 }

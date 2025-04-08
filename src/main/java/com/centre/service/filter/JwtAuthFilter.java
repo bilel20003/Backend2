@@ -22,7 +22,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component 
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private final List<String> allowedEndPoints = Arrays.asList("/api/**","/api/personnes/login");
+    private final List<String> allowedEndPoints = Arrays.asList("/api/personnes/login","/api/personnes/addNewAppuser");
 
     @Autowired
     JwtService jwtService;

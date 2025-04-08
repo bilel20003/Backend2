@@ -42,7 +42,7 @@ public class SecurityConfig {
             .and()
             .csrf().disable()
             .authorizeHttpRequests()
-            .requestMatchers("/api/**", "/api/personnes/login").permitAll()
+            .requestMatchers( "/api/personnes/login","/api/personnes/addNewAppuser").permitAll()
             .anyRequest().authenticated()
             .and()
             .exceptionHandling()

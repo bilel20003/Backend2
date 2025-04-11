@@ -8,6 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.centre.service.model.Role;
 import com.centre.service.model.UserInfo;
 
 public class UserInfoDetails implements UserDetails {
@@ -16,13 +17,15 @@ public class UserInfoDetails implements UserDetails {
     private String password;
     private String status;
     private List<GrantedAuthority> authorities;
+    private Role role; // Ajoutez un champ pour le rôle
 
     public UserInfoDetails(UserInfo userInfo) {
         this.name = userInfo.getEmail(); // utilise bien l'email comme username
         this.password = userInfo.getPassword();
         this.status = userInfo.getStatus();
+        this.role = userInfo.getRole(); // Récupérez le rôle ici
         this.authorities = Collections.singletonList(
-            new SimpleGrantedAuthority("ROLE_" + userInfo.getRole().name()) // ex: ROLE_ADMIN
+                new SimpleGrantedAuthority("ROLE_" + userInfo.getRole().name()) // ex: ROLE_ADMIN
         );
     }
 
@@ -63,5 +66,9 @@ public class UserInfoDetails implements UserDetails {
     @Override
     public boolean isEnabled() {
         return "true".equalsIgnoreCase(status);
+    }
+
+    public Role getRole() {
+        return role; // Retournez le rôle
     }
 }

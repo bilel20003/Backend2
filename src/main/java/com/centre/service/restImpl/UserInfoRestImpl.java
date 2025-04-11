@@ -76,5 +76,12 @@ public class UserInfoRestImpl implements UserInfoRest {
       }
     }
 
+
+
+    @Override
+    public ResponseEntity<?> checkToken() {
+        return userInfoService.checkToken();
+    }
+
    
 }

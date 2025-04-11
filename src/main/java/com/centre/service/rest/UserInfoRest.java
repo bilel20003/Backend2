@@ -26,4 +26,8 @@ public interface UserInfoRest {
      @DeleteMapping("/deleteAppuser/{id}")
      ResponseEntity<?> deleteAppuser(@PathVariable Long id);
 
+     @GetMapping(path="/checktoken")
+     ResponseEntity<?> checkToken();
+
+
 }

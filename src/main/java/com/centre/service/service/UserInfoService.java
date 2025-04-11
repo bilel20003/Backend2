@@ -19,4 +19,6 @@ public interface UserInfoService {
 
     ResponseEntity<?> deleteAppuser(Long id);
 
+    ResponseEntity<?> checkToken();
+
 }

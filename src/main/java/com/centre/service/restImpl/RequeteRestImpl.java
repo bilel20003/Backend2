@@ -3,42 +3,65 @@ package com.centre.service.restImpl;
 import com.centre.service.model.Requete;
 import com.centre.service.rest.RequeteRest;
 import com.centre.service.service.RequeteService;
-import com.centre.service.serviceImpl.RequeteServiceImpl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class RequeteRestImpl implements RequeteRest {
 
-    private static final Logger log = LoggerFactory.getLogger(RequeteServiceImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(RequeteRestImpl.class);
 
     @Autowired
     private RequeteService requeteService;
 
     @Override
     public ResponseEntity<?> addRequete(@RequestBody Requete requete) {
-        return requeteService.addRequete(requete);
+        try {
+            return requeteService.addRequete(requete);
+        } catch (Exception e) {
+            log.error("Error adding requete: {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Error adding requete\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
     public ResponseEntity<?> getAllRequetes() {
-        return requeteService.getAllRequetes();
+        try {
+            return requeteService.getAllRequetes();
+        } catch (Exception e) {
+            log.error("Error retrieving all requetes: {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Error retrieving all requetes\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
     public ResponseEntity<?> updateRequete(@PathVariable Long id, @RequestBody Requete requete) {
-        return requeteService.updateRequete(id, requete);
+        try {
+            return requeteService.updateRequete(id, requete);
+        } catch (Exception e) {
+            log.error("Error updating requete with id {}: {}", id, e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Error updating requete\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
     public ResponseEntity<?> deleteRequete(@PathVariable Long id) {
-        return requeteService.deleteRequete(id);
+        try {
+            return requeteService.deleteRequete(id);
+        } catch (Exception e) {
+            log.error("Error deleting requete with id {}: {}", id, e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Error deleting requete\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

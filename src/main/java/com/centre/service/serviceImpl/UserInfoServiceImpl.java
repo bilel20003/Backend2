@@ -21,7 +21,6 @@ import com.centre.service.JwtService.JwtService;
 import com.centre.service.JwtService.UserInfoDetails;
 import com.centre.service.filter.JwtAuthFilter;
 import com.centre.service.model.AuthRequest;
-import com.centre.service.model.Role;
 import com.centre.service.model.UserInfo;
 import com.centre.service.repository.UserInfoRepository;
 import com.centre.service.service.UserInfoService;
@@ -49,7 +48,8 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Override
     public ResponseEntity<?> addNewAppuser(UserInfo userInfo) {
-        try { // Vérifiez si les informations de l'utilisateur sont valides
+        try {
+            // Vérifiez si les informations de l'utilisateur sont valides
             if (!ValidateUserInfo(userInfo)) {
                 return new ResponseEntity<>("{\"message\":\"Missing required Data\"}", HttpStatus.BAD_REQUEST);
             }
@@ -65,7 +65,11 @@ public class UserInfoServiceImpl implements UserInfoService {
             userInfo.setStatus("false");
             userInfo.setEmail(userInfo.getEmail().toLowerCase());
             userInfo.setIsDeletable("true");
-            userInfo.setRole(userInfo.getRole());
+
+            // Assurez-vous que le service est correctement défini
+            if (userInfo.getService() == null) {
+                return new ResponseEntity<>("{\"message\":\"Service must be provided\"}", HttpStatus.BAD_REQUEST);
+            }
 
             // Enregistrez l'utilisateur dans la base de données
             userInfoRepository.save(userInfo);
@@ -144,27 +148,26 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Override
     public ResponseEntity<?> updateAppuser(Long id, UserInfo updatedUser) {
         try {
-            // Vérifie si l'utilisateur existe
+            // Vérifiez si l'utilisateur existe
             Optional<UserInfo> optionalUser = userInfoRepository.findById(id);
             if (optionalUser.isEmpty()) {
-                return new ResponseEntity<>("{\"message\":\"User not found\"}", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("{\"message\":\"User  not found\"}", HttpStatus.NOT_FOUND);
             }
 
-            // Vérifie si l'email envoyé existe déjà
+            // Vérifiez si l'email envoyé existe déjà
             if (updatedUser.getEmail() != null) {
                 Optional<UserInfo> db = userInfoRepository.findByEmail(updatedUser.getEmail());
-                if (db.isPresent()) {
+                if (db.isPresent() && !db.get().getId().equals(id)) { // Vérifiez que l'email n'appartient pas à un
+                                                                      // autre utilisateur
                     return new ResponseEntity<>("{\"message\":\"Email already exists\"}", HttpStatus.BAD_REQUEST);
                 }
             }
 
-            // Récupère l'utilisateur actuel
+            // Récupérez l'utilisateur actuel
             UserInfo user = optionalUser.get();
-
-            // Vérifie les champs du body (on ne les met à jour que s'ils sont présents et
-            // valides)
             boolean isUpdated = false;
 
+            // Mettez à jour les champs si présents
             if (updatedUser.getName() != null && !updatedUser.getName().trim().isEmpty()) {
                 user.setName(updatedUser.getName());
                 isUpdated = true;
@@ -190,6 +193,11 @@ public class UserInfoServiceImpl implements UserInfoService {
                 isUpdated = true;
             }
 
+            if (updatedUser.getService() != null) {
+                user.setService(updatedUser.getService()); // Mettez à jour le service
+                isUpdated = true;
+            }
+
             // Si aucune donnée n'a été mise à jour, renvoie un message d'erreur
             if (!isUpdated) {
                 return new ResponseEntity<>("{\"message\":\"No valid fields provided for update\"}",
@@ -198,7 +206,7 @@ public class UserInfoServiceImpl implements UserInfoService {
 
             // Sauvegarde l'utilisateur mis à jour
             userInfoRepository.save(user);
-            return new ResponseEntity<>("{\"message\":\"User updated successfully\"}", HttpStatus.OK);
+            return new ResponseEntity<>("{\"message\":\"User  updated successfully\"}", HttpStatus.OK);
         } catch (Exception e) {
             log.error("Error updating user: {}", e.getMessage());
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);

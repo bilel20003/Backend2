@@ -9,6 +9,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.centre.service.model.Role;
+import com.centre.service.model.Servicee;
 import com.centre.service.model.UserInfo;
 
 public class UserInfoDetails implements UserDetails {
@@ -17,13 +18,15 @@ public class UserInfoDetails implements UserDetails {
     private String password;
     private String status;
     private List<GrantedAuthority> authorities;
-    private Role role; // Ajoutez un champ pour le rôle
+    private Role role; // Champ pour le rôle
+    private Servicee service; // Champ pour le service
 
     public UserInfoDetails(UserInfo userInfo) {
-        this.name = userInfo.getEmail(); // utilise bien l'email comme username
+        this.name = userInfo.getEmail(); // Utilise l'email comme username
         this.password = userInfo.getPassword();
         this.status = userInfo.getStatus();
         this.role = userInfo.getRole(); // Récupérez le rôle ici
+        this.service = userInfo.getService(); // Récupérez le service ici
         this.authorities = Collections.singletonList(
                 new SimpleGrantedAuthority("ROLE_" + userInfo.getRole().name()) // ex: ROLE_ADMIN
         );
@@ -70,5 +73,9 @@ public class UserInfoDetails implements UserDetails {
 
     public Role getRole() {
         return role; // Retournez le rôle
+    }
+
+    public Servicee getService() {
+        return service; // Retournez le service
     }
 }

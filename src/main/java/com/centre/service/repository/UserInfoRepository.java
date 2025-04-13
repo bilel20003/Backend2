@@ -11,12 +11,12 @@ import java.util.Optional;
 
 @Repository
 public interface UserInfoRepository extends JpaRepository<UserInfo, Long> {
-    
+
     Optional<UserInfo> findByEmail(String email); // Ajout pour l'authentification
-    
-    @Query(name = "User  Info.getAllAppuser")
+
+    @Query(name = "UserInfo.getAllAppuser")
     List<UserInfo> getAllAppuser(@Param("email") String email);
-    
+
     boolean existsByEmail(String email);
 
 }

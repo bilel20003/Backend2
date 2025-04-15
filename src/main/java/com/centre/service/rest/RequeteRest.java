@@ -10,6 +10,9 @@ public interface RequeteRest {
     @GetMapping
     ResponseEntity<?> getAllRequetes();
 
+    @GetMapping("/client/{clientId}") // Nouvelle méthode pour récupérer les requêtes par client
+    ResponseEntity<?> getRequetesByClient(@PathVariable Long clientId);
+
     @PostMapping
     ResponseEntity<?> addRequete(@RequestBody Requete requete);
 

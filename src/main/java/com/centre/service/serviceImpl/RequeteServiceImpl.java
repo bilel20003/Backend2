@@ -46,6 +46,19 @@ public class RequeteServiceImpl implements RequeteService {
     }
 
     @Override
+    public ResponseEntity<?> getRequetesByClient(Long clientId) {
+        try {
+            List<Requete> requetes = requeteRepository.findByClientId(clientId); // Assurez-vous d'avoir cette méthode
+                                                                                 // dans votre repository
+            return new ResponseEntity<>(requetes, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Error retrieving requetes for client {}: {}", clientId, e.getMessage());
+            return new ResponseEntity<>("{\"message\":\"Error retrieving requetes for client\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
     public ResponseEntity<?> updateRequete(Long id, @RequestBody Requete updatedRequete) {
         try {
             // Vérifie si la requête existe

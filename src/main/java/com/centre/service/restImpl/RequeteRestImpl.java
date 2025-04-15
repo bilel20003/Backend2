@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,6 +40,17 @@ public class RequeteRestImpl implements RequeteRest {
         } catch (Exception e) {
             log.error("Error retrieving all requetes: {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Error retrieving all requetes\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> getRequetesByClient(@PathVariable Long clientId) {
+        try {
+            return requeteService.getRequetesByClient(clientId);
+        } catch (Exception e) {
+            log.error("Error retrieving requetes for client {}: {}", clientId, e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Error retrieving requetes for client\"}",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

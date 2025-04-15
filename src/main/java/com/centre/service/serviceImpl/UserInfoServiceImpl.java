@@ -99,14 +99,11 @@ public class UserInfoServiceImpl implements UserInfoService {
 
                 // Vérifiez le statut de l'utilisateur
                 if ("true".equalsIgnoreCase(userDetails.getStatus())) {
-                    String token = jwtService.generateToken(userDetails.getUsername());
-                    String role = userDetails.getRole().name(); // Récupérer le rôle de l'utilisateur
+                    String token = jwtService.generateToken(userDetails);
 
                     // Créer une réponse JSON avec le token et le rôle
                     Map<String, Object> response = new HashMap<>();
                     response.put("token", token);
-                    response.put("role", role); // Inclure le rôle dans la réponse
-
                     return new ResponseEntity<>(response, HttpStatus.OK);
                 } else {
                     return new ResponseEntity<>(

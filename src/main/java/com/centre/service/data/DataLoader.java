@@ -12,7 +12,6 @@ import com.centre.service.model.Ministere; // Import manquant
 import com.centre.service.repository.ServiceeRepository;
 import com.centre.service.repository.UserInfoRepository;
 import com.centre.service.repository.MinistereRepository; // Ajoutez ce repository
-import java.util.Optional;
 
 @Component
 public class DataLoader implements ApplicationRunner {

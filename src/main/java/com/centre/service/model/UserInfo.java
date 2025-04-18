@@ -43,4 +43,5 @@ public class UserInfo implements Serializable {
         this.role = role;
         this.service = service;
     }
+
 }

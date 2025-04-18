@@ -17,16 +17,12 @@ import java.util.function.Function;
 
 @Component
 public class JwtService {
-	public static final String SECRET = "jknhgjkldsnhgjklsdnhjkldnhgsnhopznhopznenzthoiunzeiugbnizebtioezrbgyieobgue"; // Remplacez
-																														// par
-																														// une
-																														// clé
-																														// valide
+	public static final String SECRET = "jknhgjkldsnhgjklsdnhjkldnhgsnhopznhopznenzthoiunzeiugbnizebtioezrbgyieobgue";
 
 	public String generateToken(UserInfoDetails userDetails) {
 		Map<String, Object> claims = new HashMap<>();
 		claims.put("role", userDetails.getRole().name());
-		claims.put("id", userDetails.getService().getId()); // si tu veux ajouter l'id du service par exemple
+		claims.put("id", userDetails.getId()); // Récupère l'ID de l'utilisateur (UserInfo)
 		claims.put("status", userDetails.getStatus());
 		return createToken(claims, userDetails.getUsername());
 	}

@@ -20,8 +20,10 @@ public class UserInfoDetails implements UserDetails {
     private List<GrantedAuthority> authorities;
     private Role role; // Champ pour le rôle
     private Servicee service; // Champ pour le service
+    private UserInfo userInfo; // Référence à l'objet UserInfo
 
     public UserInfoDetails(UserInfo userInfo) {
+        this.userInfo = userInfo;
         this.name = userInfo.getEmail(); // Utilise l'email comme username
         this.password = userInfo.getPassword();
         this.status = userInfo.getStatus();
@@ -77,5 +79,10 @@ public class UserInfoDetails implements UserDetails {
 
     public Servicee getService() {
         return service; // Retournez le service
+    }
+
+    // Getter pour l'ID de l'utilisateur
+    public Long getId() {
+        return userInfo != null ? userInfo.getId() : null;
     }
 }

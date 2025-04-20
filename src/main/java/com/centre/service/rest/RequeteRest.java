@@ -13,12 +13,15 @@ public interface RequeteRest {
     @GetMapping("/client/{clientId}") // Nouvelle méthode pour récupérer les requêtes par client
     ResponseEntity<?> getRequetesByClient(@PathVariable Long clientId);
 
-    @PostMapping
+    @PostMapping("/addrequete")
     ResponseEntity<?> addRequete(@RequestBody Requete requete);
 
-    @PutMapping("/{id}")
+    @GetMapping("/guichetier/least")
+    ResponseEntity<?> getGuichetierWithLeastRequests();
+
+    @PutMapping("/updaterequete/{id}")
     ResponseEntity<?> updateRequete(@PathVariable Long id, @RequestBody Requete requete);
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/deleterequete/{id}")
     ResponseEntity<?> deleteRequete(@PathVariable Long id);
 }

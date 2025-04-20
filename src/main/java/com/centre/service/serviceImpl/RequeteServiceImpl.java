@@ -1,7 +1,10 @@
 package com.centre.service.serviceImpl;
 
+import com.centre.service.model.EtatRequete;
 import com.centre.service.model.Requete;
+import com.centre.service.model.UserInfo;
 import com.centre.service.repository.RequeteRepository;
+import com.centre.service.repository.UserInfoRepository;
 import com.centre.service.service.RequeteService;
 
 import org.slf4j.Logger;
@@ -12,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,9 +27,25 @@ public class RequeteServiceImpl implements RequeteService {
     @Autowired
     private RequeteRepository requeteRepository;
 
+    @Autowired
+    private UserInfoRepository userInfoRepository;
+
     @Override
     public ResponseEntity<?> addRequete(Requete requete) {
         try {
+            log.info("Received request to add requete: {}", requete);
+            // Set default values for optional fields if not provided
+            if (requete.getEtat() == null) {
+                requete.setEtat(EtatRequete.NOUVEAU);
+            }
+            if (requete.getDate() == null) {
+                requete.setDate(new Date());
+            }
+            if (requete.getGuichetier() == null) {
+                // Set a default guichetier or leave as null if not required
+                // requete.setGuichetier(defaultGuichetier);
+            }
+
             requeteRepository.save(requete);
             return new ResponseEntity<>("{\"message\":\"Requête ajoutée avec succès\"}", HttpStatus.CREATED);
         } catch (Exception e) {
@@ -56,6 +76,23 @@ public class RequeteServiceImpl implements RequeteService {
             return new ResponseEntity<>("{\"message\":\"Error retrieving requetes for client\"}",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public UserInfo findGuichetierWithLeastRequests() {
+        List<UserInfo> guichetiers = userInfoRepository.findActiveGuichetiers(); // Guichetiers actifs uniquement
+        UserInfo selectedGuichetier = null;
+        long minRequests = Long.MAX_VALUE;
+
+        for (UserInfo guichetier : guichetiers) {
+            long count = requeteRepository.countActiveRequetesForGuichetier(guichetier.getId());
+            if (count < minRequests) {
+                minRequests = count;
+                selectedGuichetier = guichetier;
+            }
+        }
+
+        return selectedGuichetier;
     }
 
     @Override

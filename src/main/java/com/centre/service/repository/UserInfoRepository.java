@@ -19,4 +19,7 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Long> {
 
     boolean existsByEmail(String email);
 
+    @Query("SELECT u FROM UserInfo u WHERE u.role = 'GUICHETIER' AND u.status = 'true'")
+    List<UserInfo> findActiveGuichetiers();
+
 }

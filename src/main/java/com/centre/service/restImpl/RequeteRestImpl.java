@@ -1,6 +1,7 @@
 package com.centre.service.restImpl;
 
 import com.centre.service.model.Requete;
+import com.centre.service.model.UserInfo;
 import com.centre.service.rest.RequeteRest;
 import com.centre.service.service.RequeteService;
 
@@ -51,6 +52,18 @@ public class RequeteRestImpl implements RequeteRest {
         } catch (Exception e) {
             log.error("Error retrieving requetes for client {}: {}", clientId, e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Error retrieving requetes for client\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> getGuichetierWithLeastRequests() {
+        try {
+            UserInfo guichetier = requeteService.findGuichetierWithLeastRequests();
+            return new ResponseEntity<>(guichetier, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Error retrieving guichetier with least requests: {}", e.getMessage());
+            return new ResponseEntity<>("{\"message\":\"Error retrieving guichetier\"}",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

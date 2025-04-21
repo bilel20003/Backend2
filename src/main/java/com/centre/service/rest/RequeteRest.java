@@ -1,5 +1,6 @@
 package com.centre.service.rest;
 
+import com.centre.service.model.EtatRequete;
 import com.centre.service.model.Requete;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,9 @@ public interface RequeteRest {
 
     @GetMapping("/client/{clientId}") // Nouvelle méthode pour récupérer les requêtes par client
     ResponseEntity<?> getRequetesByClient(@PathVariable Long clientId);
+
+    @GetMapping("/guichetier/{guichetierId}") // Nouvel endpoint
+    ResponseEntity<?> getRequetesByGuichetier(@PathVariable Long guichetierId);
 
     @PostMapping("/addrequete")
     ResponseEntity<?> addRequete(@RequestBody Requete requete);

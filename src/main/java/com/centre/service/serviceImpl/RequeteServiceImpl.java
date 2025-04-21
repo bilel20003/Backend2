@@ -79,6 +79,18 @@ public class RequeteServiceImpl implements RequeteService {
     }
 
     @Override
+    public ResponseEntity<?> getRequetesByGuichetier(Long guichetierId) {
+        try {
+            List<Requete> requetes = requeteRepository.findByGuichetierId(guichetierId);
+            return new ResponseEntity<>(requetes, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Error retrieving requetes for guichetier {}: {}", guichetierId, e.getMessage());
+            return new ResponseEntity<>("{\"message\":\"Error retrieving requetes for guichetier\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
     public UserInfo findGuichetierWithLeastRequests() {
         List<UserInfo> guichetiers = userInfoRepository.findActiveGuichetiers(); // Guichetiers actifs uniquement
         UserInfo selectedGuichetier = null;

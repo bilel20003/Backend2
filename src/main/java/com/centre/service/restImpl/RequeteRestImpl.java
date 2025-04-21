@@ -1,5 +1,6 @@
 package com.centre.service.restImpl;
 
+import com.centre.service.model.EtatRequete;
 import com.centre.service.model.Requete;
 import com.centre.service.model.UserInfo;
 import com.centre.service.rest.RequeteRest;
@@ -52,6 +53,17 @@ public class RequeteRestImpl implements RequeteRest {
         } catch (Exception e) {
             log.error("Error retrieving requetes for client {}: {}", clientId, e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Error retrieving requetes for client\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> getRequetesByGuichetier(@PathVariable Long guichetierId) {
+        try {
+            return requeteService.getRequetesByGuichetier(guichetierId);
+        } catch (Exception e) {
+            log.error("Error retrieving requetes for guichetier {}: {}", guichetierId, e.getMessage());
+            return new ResponseEntity<>("{\"message\":\"Error retrieving requetes for guichetier\"}",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

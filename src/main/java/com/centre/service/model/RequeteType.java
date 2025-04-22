@@ -1,5 +1,5 @@
 package com.centre.service.model;
 
-public enum ReclamationType {
+public enum RequeteType {
     RECLAMATION, DEMANDE_DE_TRAVAUX
 }

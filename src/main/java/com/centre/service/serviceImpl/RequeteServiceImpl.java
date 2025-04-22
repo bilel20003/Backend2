@@ -41,10 +41,6 @@ public class RequeteServiceImpl implements RequeteService {
             if (requete.getDate() == null) {
                 requete.setDate(new Date());
             }
-            if (requete.getGuichetier() == null) {
-                // Set a default guichetier or leave as null if not required
-                // requete.setGuichetier(defaultGuichetier);
-            }
 
             requeteRepository.save(requete);
             return new ResponseEntity<>("{\"message\":\"Requête ajoutée avec succès\"}", HttpStatus.CREATED);
@@ -68,8 +64,7 @@ public class RequeteServiceImpl implements RequeteService {
     @Override
     public ResponseEntity<?> getRequetesByClient(Long clientId) {
         try {
-            List<Requete> requetes = requeteRepository.findByClientId(clientId); // Assurez-vous d'avoir cette méthode
-                                                                                 // dans votre repository
+            List<Requete> requetes = requeteRepository.findByClientId(clientId);
             return new ResponseEntity<>(requetes, HttpStatus.OK);
         } catch (Exception e) {
             log.error("Error retrieving requetes for client {}: {}", clientId, e.getMessage());
@@ -92,7 +87,7 @@ public class RequeteServiceImpl implements RequeteService {
 
     @Override
     public UserInfo findGuichetierWithLeastRequests() {
-        List<UserInfo> guichetiers = userInfoRepository.findActiveGuichetiers(); // Guichetiers actifs uniquement
+        List<UserInfo> guichetiers = userInfoRepository.findActiveGuichetiers();
         UserInfo selectedGuichetier = null;
         long minRequests = Long.MAX_VALUE;
 
@@ -110,7 +105,6 @@ public class RequeteServiceImpl implements RequeteService {
     @Override
     public ResponseEntity<?> updateRequete(Long id, @RequestBody Requete updatedRequete) {
         try {
-            // Vérifie si la requête existe
             Optional<Requete> existingRequeteOpt = requeteRepository.findById(id);
             if (existingRequeteOpt.isEmpty()) {
                 return new ResponseEntity<>("{\"message\":\"Requête non trouvée\"}", HttpStatus.NOT_FOUND);
@@ -125,11 +119,6 @@ public class RequeteServiceImpl implements RequeteService {
 
             if (updatedRequete.getType() != null) {
                 existingRequete.setType(updatedRequete.getType());
-                isUpdated = true;
-            }
-
-            if (updatedRequete.getObjet() != null) {
-                existingRequete.setObjet(updatedRequete.getObjet());
                 isUpdated = true;
             }
 

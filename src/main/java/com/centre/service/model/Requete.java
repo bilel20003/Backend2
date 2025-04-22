@@ -22,10 +22,7 @@ public class Requete implements Serializable {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    private ReclamationType type; // Utilisation de l'énumération pour le type de réclamation
-
-    @Enumerated(EnumType.STRING)
-    private ReclamationObjet objet; // Utilisation de l'énumération pour l'objet de réclamation
+    private RequeteType type; // Utilisation de l'énumération pour le type de réclamation
 
     private String description;
 
@@ -34,7 +31,6 @@ public class Requete implements Serializable {
 
     private String noteRetour;
     private Date date; // Date de la requête
-
 
     @ManyToOne
     @JoinColumn(name = "client_id")
@@ -47,7 +43,5 @@ public class Requete implements Serializable {
     @ManyToOne
     @JoinColumn(name = "technicien_id")
     private UserInfo technicien; // Le guichetier qui traite la requête
-
-    
 
 }

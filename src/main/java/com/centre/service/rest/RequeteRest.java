@@ -1,6 +1,5 @@
 package com.centre.service.rest;
 
-import com.centre.service.model.EtatRequete;
 import com.centre.service.model.Requete;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

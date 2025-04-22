@@ -22,7 +22,6 @@ import com.centre.service.JwtService.JwtService;
 import com.centre.service.JwtService.UserInfoDetails;
 import com.centre.service.filter.JwtAuthFilter;
 import com.centre.service.model.AuthRequest;
-import com.centre.service.model.Role;
 import com.centre.service.model.UserInfo;
 import com.centre.service.repository.UserInfoRepository;
 import com.centre.service.service.UserInfoService;

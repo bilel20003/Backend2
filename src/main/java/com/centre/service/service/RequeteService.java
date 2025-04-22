@@ -1,6 +1,5 @@
 package com.centre.service.service;
 
-import com.centre.service.model.EtatRequete;
 import com.centre.service.model.Requete;
 import com.centre.service.model.UserInfo;
 

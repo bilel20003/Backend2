@@ -1,6 +1,5 @@
 package com.centre.service.repository;
 
-import com.centre.service.model.Role;
 import com.centre.service.model.UserInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

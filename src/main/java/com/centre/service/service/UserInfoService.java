@@ -1,12 +1,12 @@
 package com.centre.service.service;
 
-import org.springframework.http.ResponseEntity; 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.centre.service.model.AuthRequest;
 import com.centre.service.model.UserInfo;
 
-@Service 
+@Service
 public interface UserInfoService {
 
     ResponseEntity<?> addNewAppuser(UserInfo UserInfo);
@@ -14,7 +14,9 @@ public interface UserInfoService {
     ResponseEntity<?> login(AuthRequest authRequest);
 
     ResponseEntity<?> getAllAppuser();
-    
+
+    ResponseEntity<?> getAllTechniciens();
+
     ResponseEntity<?> updateAppuser(Long id, UserInfo userInfo);
 
     ResponseEntity<?> deleteAppuser(Long id);

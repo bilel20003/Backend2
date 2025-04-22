@@ -1,6 +1,7 @@
 package com.centre.service.serviceImpl;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -21,6 +22,7 @@ import com.centre.service.JwtService.JwtService;
 import com.centre.service.JwtService.UserInfoDetails;
 import com.centre.service.filter.JwtAuthFilter;
 import com.centre.service.model.AuthRequest;
+import com.centre.service.model.Role;
 import com.centre.service.model.UserInfo;
 import com.centre.service.repository.UserInfoRepository;
 import com.centre.service.service.UserInfoService;
@@ -140,6 +142,17 @@ public class UserInfoServiceImpl implements UserInfoService {
             log.error("Error while getAllAppuser: {}", ex.getMessage());
         }
         return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<?> getAllTechniciens() {
+        try {
+            List<UserInfo> techniciens = userInfoRepository.findActiveTechniciens();
+            return new ResponseEntity<>(techniciens, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Error while getting all techniciens: {}", e.getMessage());
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override

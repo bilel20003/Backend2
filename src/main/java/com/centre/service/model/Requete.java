@@ -33,6 +33,10 @@ public class Requete implements Serializable {
     private Date date; // Date de la requête
 
     @ManyToOne
+    @JoinColumn(name = "objet_id", nullable = false)
+    private Objet objet;
+
+    @ManyToOne
     @JoinColumn(name = "client_id")
     private UserInfo client; // Le client qui a créé la requête
 

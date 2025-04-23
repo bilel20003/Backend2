@@ -18,20 +18,19 @@ public class UserInfoDetails implements UserDetails {
     private String password;
     private String status;
     private List<GrantedAuthority> authorities;
-    private Role role; // Champ pour le rôle
-    private Servicee service; // Champ pour le service
-    private UserInfo userInfo; // Référence à l'objet UserInfo
+    private Role role;
+    private Servicee service;
+    private UserInfo userInfo;
 
     public UserInfoDetails(UserInfo userInfo) {
         this.userInfo = userInfo;
-        this.name = userInfo.getEmail(); // Utilise l'email comme username
+        this.name = userInfo.getEmail();
         this.password = userInfo.getPassword();
         this.status = userInfo.getStatus();
-        this.role = userInfo.getRole(); // Récupérez le rôle ici
-        this.service = userInfo.getService(); // Récupérez le service ici
+        this.role = userInfo.getRole();
+        this.service = userInfo.getService();
         this.authorities = Collections.singletonList(
-                new SimpleGrantedAuthority("ROLE_" + userInfo.getRole().name()) // ex: ROLE_ADMIN
-        );
+                new SimpleGrantedAuthority("ROLE_" + userInfo.getRole().getName()));
     }
 
     @Override
@@ -74,14 +73,13 @@ public class UserInfoDetails implements UserDetails {
     }
 
     public Role getRole() {
-        return role; // Retournez le rôle
+        return role;
     }
 
     public Servicee getService() {
-        return service; // Retournez le service
+        return service;
     }
 
-    // Getter pour l'ID de l'utilisateur
     public Long getId() {
         return userInfo != null ? userInfo.getId() : null;
     }

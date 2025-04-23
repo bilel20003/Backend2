@@ -22,7 +22,7 @@ public class Ministere implements Serializable {
 
     private String nomMinistere;
 
-    @JsonManagedReference // <-- Gère la sérialisation de ce côté
+    @JsonManagedReference
     @OneToMany(mappedBy = "ministere", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Servicee> services;
 }

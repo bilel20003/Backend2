@@ -27,7 +27,7 @@ public class ProduitServiceImpl implements ProduitService {
             List<Produit> produits = produitRepository.findAll();
             return new ResponseEntity<>(produits, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error while retrieving all products: {}", e.getMessage());
+            log.error("Error while retrieving all products: {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -42,7 +42,7 @@ public class ProduitServiceImpl implements ProduitService {
                 return new ResponseEntity<>("{\"message\":\"Product not found\"}", HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
-            log.error("Error while retrieving product by ID: {}", e.getMessage());
+            log.error("Error while retrieving product by ID: {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -54,11 +54,14 @@ public class ProduitServiceImpl implements ProduitService {
             if (produit.getNom() == null || produit.getNom().isEmpty()) {
                 return new ResponseEntity<>("{\"message\":\"Product name is required\"}", HttpStatus.BAD_REQUEST);
             }
+            if (produit.getPrix() != null && produit.getPrix() < 0) {
+                return new ResponseEntity<>("{\"message\":\"Price cannot be negative\"}", HttpStatus.BAD_REQUEST);
+            }
             // Enregistrement du produit
             Produit savedProduit = produitRepository.save(produit);
             return new ResponseEntity<>(savedProduit, HttpStatus.CREATED);
         } catch (Exception e) {
-            log.error("Error while creating product: {}", e.getMessage());
+            log.error("Error while creating product: {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -69,11 +72,18 @@ public class ProduitServiceImpl implements ProduitService {
             if (!produitRepository.existsById(id)) {
                 return new ResponseEntity<>("{\"message\":\"Product not found\"}", HttpStatus.NOT_FOUND);
             }
+            // Validation des données du produit
+            if (produit.getNom() == null || produit.getNom().isEmpty()) {
+                return new ResponseEntity<>("{\"message\":\"Product name is required\"}", HttpStatus.BAD_REQUEST);
+            }
+            if (produit.getPrix() != null && produit.getPrix() < 0) {
+                return new ResponseEntity<>("{\"message\":\"Price cannot be negative\"}", HttpStatus.BAD_REQUEST);
+            }
             produit.setId(id);
             Produit updatedProduit = produitRepository.save(produit);
             return new ResponseEntity<>(updatedProduit, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error while updating product: {}", e.getMessage());
+            log.error("Error while updating product: {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -84,10 +94,16 @@ public class ProduitServiceImpl implements ProduitService {
             if (!produitRepository.existsById(id)) {
                 return new ResponseEntity<>("{\"message\":\"Product not found\"}", HttpStatus.NOT_FOUND);
             }
+            // Check if the product is referenced by any user_info records
+            long userCount = produitRepository.countUsersByProduitId(id);
+            if (userCount > 0) {
+                return new ResponseEntity<>("{\"message\":\"Cannot delete product as it is associated with users\"}",
+                        HttpStatus.BAD_REQUEST);
+            }
             produitRepository.deleteById(id);
             return new ResponseEntity<>("{\"message\":\"Product deleted successfully\"}", HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error while deleting product: {}", e.getMessage());
+            log.error("Error while deleting product: {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

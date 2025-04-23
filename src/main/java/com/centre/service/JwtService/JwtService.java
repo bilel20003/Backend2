@@ -21,8 +21,8 @@ public class JwtService {
 
 	public String generateToken(UserInfoDetails userDetails) {
 		Map<String, Object> claims = new HashMap<>();
-		claims.put("role", userDetails.getRole().name());
-		claims.put("id", userDetails.getId()); // Récupère l'ID de l'utilisateur (UserInfo)
+		claims.put("role", userDetails.getRole().getName());
+		claims.put("id", userDetails.getId());
 		claims.put("status", userDetails.getStatus());
 		return createToken(claims, userDetails.getUsername());
 	}
@@ -30,9 +30,9 @@ public class JwtService {
 	private String createToken(Map<String, Object> claims, String userName) {
 		return Jwts.builder()
 				.setClaims(claims)
-				.setSubject(userName) // ça peut être l'email
+				.setSubject(userName)
 				.setIssuedAt(new Date(System.currentTimeMillis()))
-				.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 120)) // 2 heures
+				.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 120))
 				.signWith(getSignKey(), SignatureAlgorithm.HS256)
 				.compact();
 	}
@@ -72,5 +72,4 @@ public class JwtService {
 				.parseClaimsJws(token)
 				.getBody();
 	}
-
 }

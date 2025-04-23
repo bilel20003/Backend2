@@ -1,7 +1,7 @@
 package com.centre.service.serviceImpl;
 
 import com.centre.service.model.Rdv;
-import com.centre.service.model.Role;
+
 import com.centre.service.model.UserInfo;
 import com.centre.service.repository.RdvRepository;
 import com.centre.service.repository.UserInfoRepository;
@@ -38,7 +38,7 @@ public class RdvServiceImpl implements RdvService {
 
             // Vérifiez si le client existe
             Optional<UserInfo> clientOpt = userInfoRepository.findById(rdv.getClient().getId());
-            if (clientOpt.isEmpty() || !clientOpt.get().getRole().equals(Role.CLIENT)) {
+            if (clientOpt.isEmpty() || !clientOpt.get().getRole().getName().equals("CLIENT")) {
                 return new ResponseEntity<>("{\"message\":\"Client non trouvé ou rôle incorrect\"}",
                         HttpStatus.NOT_FOUND);
             }
@@ -83,7 +83,7 @@ public class RdvServiceImpl implements RdvService {
             // Vérifiez si le guichetier est valide
             if (updatedRdv.getGuichetier() != null && updatedRdv.getGuichetier().getId() != null) {
                 Optional<UserInfo> guichetierOpt = userInfoRepository.findById(updatedRdv.getGuichetier().getId());
-                if (guichetierOpt.isPresent() && guichetierOpt.get().getRole().equals(Role.GUICHETIER)) {
+                if (guichetierOpt.isPresent() && guichetierOpt.get().getRole().getName().equals("GUICHETIER")) {
                     existingRdv.setGuichetier(guichetierOpt.get());
                 }
             }
@@ -91,7 +91,7 @@ public class RdvServiceImpl implements RdvService {
             // Vérifiez si le client est fourni dans updatedRdv
             if (updatedRdv.getClient() != null && updatedRdv.getClient().getId() != null) {
                 Optional<UserInfo> clientOpt = userInfoRepository.findById(updatedRdv.getClient().getId());
-                if (clientOpt.isPresent() && clientOpt.get().getRole().equals(Role.CLIENT)) {
+                if (clientOpt.isPresent() && clientOpt.get().getRole().getName().equals("CLIENT")) {
                     existingRdv.setClient(clientOpt.get());
                 } else {
                     return new ResponseEntity<>("{\"message\":\"Client non trouvé ou rôle incorrect\"}",

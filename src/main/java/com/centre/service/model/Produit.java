@@ -25,7 +25,4 @@ public class Produit implements Serializable {
     private String topologie;
     private Double prix;
 
-    @ManyToOne
-    @JoinColumn(name = "user_info_id", nullable = false)
-    private UserInfo client; // Relation avec UserInfo
 }

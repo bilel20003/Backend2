@@ -27,8 +27,13 @@ public class UserInfo implements Serializable {
     private String isDeletable;
     private String status;
 
-    @Enumerated(EnumType.STRING)
+    @ManyToOne
+    @JoinColumn(name = "role_id", nullable = false)
     private Role role;
+
+    @ManyToOne
+    @JoinColumn(name = "produit_id", nullable = false)
+    private Produit produit;
 
     @ManyToOne
     @JoinColumn(name = "service_id", nullable = false)
@@ -43,5 +48,4 @@ public class UserInfo implements Serializable {
         this.role = role;
         this.service = service;
     }
-
 }

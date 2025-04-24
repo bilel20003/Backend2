@@ -76,7 +76,7 @@ public class DataLoader implements ApplicationRunner {
                 });
 
         // Créer les autres rôles pour éviter des erreurs futures
-        String[] roles = { "GUICHETIER", "TECHNICIEN", "CLIENT" };
+        String[] roles = { "GUICHETIER", "TECHNICIEN", "CLIENT", "DACA" };
         for (String roleName : roles) {
             roleRepository.findByName(roleName)
                     .orElseGet(() -> {

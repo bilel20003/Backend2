@@ -15,6 +15,8 @@ public interface RequeteService {
 
     ResponseEntity<?> getRequetesByGuichetier(Long guichetierId);
 
+    ResponseEntity<?> getRequetesByTechnicien(Long technicienId);
+
     UserInfo findGuichetierWithLeastRequests();
 
     ResponseEntity<?> updateRequete(Long id, Requete requete);

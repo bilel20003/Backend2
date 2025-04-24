@@ -68,6 +68,17 @@ public class RequeteRestImpl implements RequeteRest {
     }
 
     @Override
+    public ResponseEntity<?> getRequetesByTechnicien(@PathVariable Long technicienId) {
+        try {
+            return requeteService.getRequetesByTechnicien(technicienId);
+        } catch (Exception e) {
+            log.error("Error retrieving requetes for technicien {}: {}", technicienId, e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Error retrieving requetes for technicien\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
     public ResponseEntity<?> getGuichetierWithLeastRequests() {
         try {
             UserInfo guichetier = requeteService.findGuichetierWithLeastRequests();

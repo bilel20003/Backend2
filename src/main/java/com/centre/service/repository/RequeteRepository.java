@@ -10,9 +10,11 @@ import com.centre.service.model.Requete;
 
 public interface RequeteRepository extends JpaRepository<Requete, Long> {
 
-    List<Requete> findByClientId(Long clientId); // Nouvelle méthode pour récupérer les requêtes par clien
+    List<Requete> findByClientId(Long clientId);
 
     List<Requete> findByGuichetierId(Long guichetierId);
+
+    List<Requete> findByTechnicienId(Long technicienId);
 
     @Query("SELECT COUNT(r) FROM Requete r WHERE r.guichetier.id = :guichetierId AND (r.etat = 'NOUVEAU' OR r.etat = 'EN_COURS_DE_TRAITEMENT')")
     long countActiveRequetesForGuichetier(@Param("guichetierId") Long guichetierId);

@@ -1,18 +1,16 @@
 package com.centre.service.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.io.Serializable;
 
 @Entity
 @Table(name = "service")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Servicee implements Serializable {
+public class Servicee implements java.io.Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
@@ -21,8 +19,7 @@ public class Servicee implements Serializable {
 
     private String nomService;
 
-    @JsonBackReference // <-- Bloque la sérialisation de ce côté
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "ministere_id", nullable = false)
     private Ministere ministere;
 }

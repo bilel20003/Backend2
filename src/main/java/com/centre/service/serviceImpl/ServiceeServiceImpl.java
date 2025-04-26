@@ -29,7 +29,7 @@ public class ServiceeServiceImpl implements ServiceeService {
     @Override
     public ResponseEntity<?> getAllServices() {
         try {
-            List<Servicee> services = serviceRepository.findAll();
+            List<Servicee> services = serviceRepository.findAllWithMinistere();
             return new ResponseEntity<>(services, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -42,7 +42,7 @@ public class ServiceeServiceImpl implements ServiceeService {
             if (!serviceRepository.existsById(id)) {
                 return new ResponseEntity<>("{\"message\":\"Service not found\"}", HttpStatus.NOT_FOUND);
             }
-            service.setId(id); // Assurez-vous que la méthode setId existe dans la classe Service
+            service.setId(id);
             serviceRepository.save(service);
             return new ResponseEntity<>("{\"message\":\"Service updated successfully\"}", HttpStatus.OK);
         } catch (Exception e) {

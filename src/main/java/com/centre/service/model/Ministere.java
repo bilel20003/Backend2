@@ -1,6 +1,6 @@
 package com.centre.service.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,7 +22,7 @@ public class Ministere implements Serializable {
 
     private String nomMinistere;
 
-    @JsonManagedReference
+    @JsonIgnore
     @OneToMany(mappedBy = "ministere", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Servicee> services;
 }

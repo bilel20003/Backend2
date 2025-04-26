@@ -2,7 +2,6 @@ package com.centre.service.serviceImpl;
 
 import com.centre.service.model.Role;
 import com.centre.service.model.Produit;
-import com.centre.service.model.Servicee;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,18 +60,15 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Override
     public ResponseEntity<?> addNewAppuser(UserInfo userInfo) {
         try {
-            // Vérifiez si les informations de l'utilisateur sont valides
             if (!ValidateUserInfo(userInfo)) {
                 return new ResponseEntity<>("{\"message\":\"Missing required Data\"}", HttpStatus.BAD_REQUEST);
             }
 
-            // Vérifiez si l'email existe déjà
             Optional<UserInfo> db = userInfoRepository.findByEmail(userInfo.getEmail());
             if (db.isPresent()) {
                 return new ResponseEntity<>("{\"message\":\"Email already exists\"}", HttpStatus.BAD_REQUEST);
             }
 
-            // Vérifiez si le rôle existe
             if (userInfo.getRole() == null || userInfo.getRole().getId() == null) {
                 return new ResponseEntity<>("{\"message\":\"Role must be provided\"}", HttpStatus.BAD_REQUEST);
             }
@@ -82,7 +78,6 @@ public class UserInfoServiceImpl implements UserInfoService {
             }
             userInfo.setRole(roleOpt.get());
 
-            // Assignez le produit
             boolean isClient = "CLIENT".equalsIgnoreCase(roleOpt.get().getName());
             if (isClient) {
                 if (userInfo.getProduit() == null || userInfo.getProduit().getId() == null) {
@@ -99,7 +94,6 @@ public class UserInfoServiceImpl implements UserInfoService {
                 }
                 userInfo.setProduit(produitOpt.get());
             } else {
-                // Assign "Any" product for non-client roles
                 Optional<Produit> anyProduitOpt = produitRepository.findByNom("Any");
                 if (anyProduitOpt.isEmpty()) {
                     return new ResponseEntity<>("{\"message\":\"Default 'Any' product not found\"}",
@@ -108,18 +102,15 @@ public class UserInfoServiceImpl implements UserInfoService {
                 userInfo.setProduit(anyProduitOpt.get());
             }
 
-            // Assurez-vous que le service est correctement défini
             if (userInfo.getService() == null || userInfo.getService().getId() == null) {
                 return new ResponseEntity<>("{\"message\":\"Service must be provided\"}", HttpStatus.BAD_REQUEST);
             }
 
-            // Encodez le mot de passe et préparez l'utilisateur pour l'enregistrement
             userInfo.setPassword(encoder.encode(userInfo.getPassword()));
             userInfo.setStatus("false");
             userInfo.setEmail(userInfo.getEmail().toLowerCase());
             userInfo.setIsDeletable("true");
 
-            // Enregistrez l'utilisateur dans la base de données
             userInfoRepository.save(userInfo);
             return new ResponseEntity<>("{\"message\":\"User created successfully\"}", HttpStatus.CREATED);
         } catch (Exception e) {
@@ -145,11 +136,9 @@ public class UserInfoServiceImpl implements UserInfoService {
             if (authentication != null && authentication.isAuthenticated()) {
                 UserInfoDetails userDetails = (UserInfoDetails) authentication.getPrincipal();
 
-                // Vérifiez le statut de l'utilisateur
                 if ("true".equalsIgnoreCase(userDetails.getStatus())) {
                     String token = jwtService.generateToken(userDetails);
 
-                    // Créer une réponse JSON avec le token et le rôle
                     Map<String, Object> response = new HashMap<>();
                     response.put("token", token);
                     return new ResponseEntity<>(response, HttpStatus.OK);
@@ -203,13 +192,11 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Override
     public ResponseEntity<?> updateAppuser(Long id, UserInfo updatedUser) {
         try {
-            // Vérifiez si l'utilisateur existe
             Optional<UserInfo> optionalUser = userInfoRepository.findById(id);
             if (optionalUser.isEmpty()) {
                 return new ResponseEntity<>("{\"message\":\"User not found\"}", HttpStatus.NOT_FOUND);
             }
 
-            // Vérifiez si l'email envoyé existe déjà
             if (updatedUser.getEmail() != null) {
                 Optional<UserInfo> db = userInfoRepository.findByEmail(updatedUser.getEmail());
                 if (db.isPresent() && !db.get().getId().equals(id)) {
@@ -217,11 +204,9 @@ public class UserInfoServiceImpl implements UserInfoService {
                 }
             }
 
-            // Récupérez l'utilisateur actuel
             UserInfo user = optionalUser.get();
             boolean isUpdated = false;
 
-            // Mettez à jour les champs si présents
             if (updatedUser.getName() != null && !updatedUser.getName().trim().isEmpty()) {
                 user.setName(updatedUser.getName());
                 isUpdated = true;
@@ -242,7 +227,6 @@ public class UserInfoServiceImpl implements UserInfoService {
                 isUpdated = true;
             }
 
-            // Mettez à jour le rôle si fourni
             Role currentRole = user.getRole();
             if (updatedUser.getRole() != null && updatedUser.getRole().getId() != null) {
                 Optional<Role> roleOpt = roleRepository.findById(updatedUser.getRole().getId());
@@ -254,7 +238,6 @@ public class UserInfoServiceImpl implements UserInfoService {
                 isUpdated = true;
             }
 
-            // Vérifiez le produit en fonction du rôle
             boolean isClient = currentRole != null && "CLIENT".equalsIgnoreCase(currentRole.getName());
             if (updatedUser.getProduit() != null && updatedUser.getProduit().getId() != null) {
                 Optional<Produit> produitOpt = produitRepository.findById(updatedUser.getProduit().getId());
@@ -268,13 +251,11 @@ public class UserInfoServiceImpl implements UserInfoService {
                 user.setProduit(produitOpt.get());
                 isUpdated = true;
             } else if (isClient) {
-                // If no product provided for CLIENT, keep existing or require one
                 if (user.getProduit() == null || "Any".equalsIgnoreCase(user.getProduit().getNom())) {
                     return new ResponseEntity<>("{\"message\":\"Produit must be provided for CLIENT role\"}",
                             HttpStatus.BAD_REQUEST);
                 }
             } else {
-                // Assign "Any" product for non-client roles
                 Optional<Produit> anyProduitOpt = produitRepository.findByNom("Any");
                 if (anyProduitOpt.isEmpty()) {
                     return new ResponseEntity<>("{\"message\":\"Default 'Any' product not found\"}",
@@ -289,13 +270,11 @@ public class UserInfoServiceImpl implements UserInfoService {
                 isUpdated = true;
             }
 
-            // Si aucune donnée n'a été mise à jour, renvoie un message d'erreur
             if (!isUpdated) {
                 return new ResponseEntity<>("{\"message\":\"No valid fields provided for update\"}",
                         HttpStatus.BAD_REQUEST);
             }
 
-            // Sauvegarde l'utilisateur mis à jour
             userInfoRepository.save(user);
             return new ResponseEntity<>("{\"message\":\"User updated successfully\"}", HttpStatus.OK);
         } catch (Exception e) {
@@ -328,5 +307,24 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Override
     public ResponseEntity<?> checkToken() {
         return new ResponseEntity<>("{\"message\":\"true\"}", HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<?> toggleStatus(Long id) {
+        try {
+            Optional<UserInfo> optionalUser = userInfoRepository.findById(id);
+            if (optionalUser.isEmpty()) {
+                return new ResponseEntity<>("{\"message\":\"User not found\"}", HttpStatus.NOT_FOUND);
+            }
+
+            UserInfo user = optionalUser.get();
+            user.setStatus("true".equals(user.getStatus()) ? "false" : "true");
+            userInfoRepository.save(user);
+
+            return new ResponseEntity<>("{\"message\":\"User status toggled successfully\"}", HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Error toggling user status: {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

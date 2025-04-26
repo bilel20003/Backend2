@@ -15,9 +15,9 @@ public interface UserInfoRest {
     ResponseEntity<?> login(@RequestBody(required = true) AuthRequest authRequest);
 
     @GetMapping(path = "/getallappuser")
-    public ResponseEntity<?> getAllAppuser();
+    ResponseEntity<?> getAllAppuser();
 
-    @GetMapping(path = "/getalltechniciens") // Nouvelle méthode pour récupérer les techniciens
+    @GetMapping(path = "/getalltechniciens")
     ResponseEntity<?> getAllTechniciens();
 
     @PutMapping("/updateAppuser/{id}")
@@ -29,4 +29,6 @@ public interface UserInfoRest {
     @GetMapping(path = "/checktoken")
     ResponseEntity<?> checkToken();
 
+    @PutMapping("/toggleStatus/{id}")
+    ResponseEntity<?> toggleStatus(@PathVariable Long id);
 }

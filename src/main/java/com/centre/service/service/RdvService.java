@@ -4,7 +4,6 @@ import com.centre.service.model.Rdv;
 import org.springframework.http.ResponseEntity;
 
 public interface RdvService {
-
     ResponseEntity<?> addRdv(Rdv rdv);
 
     ResponseEntity<?> getAllRdvs();
@@ -12,4 +11,6 @@ public interface RdvService {
     ResponseEntity<?> updateRdv(Long id, Rdv rdv);
 
     ResponseEntity<?> deleteRdv(Long id);
+
+    ResponseEntity<?> refuseRdv(Long id, Long guichetierId);
 }

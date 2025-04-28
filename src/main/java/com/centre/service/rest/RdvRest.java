@@ -18,4 +18,7 @@ public interface RdvRest {
 
     @DeleteMapping("/{id}")
     ResponseEntity<?> deleteRdv(@PathVariable Long id);
+
+    @PutMapping("/{id}/refuse")
+    ResponseEntity<?> refuseRdv(@PathVariable Long id, @RequestParam Long guichetierId);
 }

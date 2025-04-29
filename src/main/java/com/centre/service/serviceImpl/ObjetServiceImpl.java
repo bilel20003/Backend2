@@ -24,10 +24,10 @@ public class ObjetServiceImpl implements ObjetService {
     @Override
     public ResponseEntity<?> getAllObjets() {
         try {
-            List<Objet> objets = objetRepository.findAll();
+            List<Objet> objets = objetRepository.findByArchiverFalse();
             return new ResponseEntity<>(objets, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error while retrieving all objects: {}", e.getMessage());
+            log.error("Error while retrieving all objects: {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -35,14 +35,14 @@ public class ObjetServiceImpl implements ObjetService {
     @Override
     public ResponseEntity<?> getObjetById(Long id) {
         try {
-            Optional<Objet> objet = objetRepository.findById(id);
+            Optional<Objet> objet = objetRepository.findByIdAndArchiverFalse(id);
             if (objet.isPresent()) {
                 return new ResponseEntity<>(objet.get(), HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("{\"message\":\"Object not found\"}", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("{\"message\":\"Object not found or archived\"}", HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
-            log.error("Error while retrieving object by ID: {}", e.getMessage());
+            log.error("Error while retrieving object by ID: {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -51,14 +51,15 @@ public class ObjetServiceImpl implements ObjetService {
     public ResponseEntity<?> createObjet(Objet objet) {
         try {
             // Validation des données de l'objet
-            if (objet.getName() == null || objet.getName().isEmpty()) {
+            if (objet.getName() == null || objet.getName().trim().isEmpty()) {
+                log.error("Object name is required");
                 return new ResponseEntity<>("{\"message\":\"Object name is required\"}", HttpStatus.BAD_REQUEST);
             }
-            // Enregistrement de l'objet
+            objet.setArchiver(false); // Ensure new objects are not archived
             Objet savedObjet = objetRepository.save(objet);
             return new ResponseEntity<>(savedObjet, HttpStatus.CREATED);
         } catch (Exception e) {
-            log.error("Error while creating object: {}", e.getMessage());
+            log.error("Error while creating object: {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -66,28 +67,52 @@ public class ObjetServiceImpl implements ObjetService {
     @Override
     public ResponseEntity<?> updateObjet(Long id, Objet objet) {
         try {
-            if (!objetRepository.existsById(id)) {
-                return new ResponseEntity<>("{\"message\":\"Object not found\"}", HttpStatus.NOT_FOUND);
+            Optional<Objet> existingObjet = objetRepository.findByIdAndArchiverFalse(id);
+            if (existingObjet.isEmpty()) {
+                log.error("Object with ID {} not found or archived", id);
+                return new ResponseEntity<>("{\"message\":\"Object not found or archived\"}", HttpStatus.NOT_FOUND);
             }
-            objet.setId(id);
-            Objet updatedObjet = objetRepository.save(objet);
+            Objet currentObjet = existingObjet.get();
+            // Validation des données de l'objet
+            if (objet.getName() != null && !objet.getName().trim().isEmpty()) {
+                currentObjet.setName(objet.getName());
+            } else {
+                log.error("Object name is required for update");
+                return new ResponseEntity<>("{\"message\":\"Object name is required\"}", HttpStatus.BAD_REQUEST);
+            }
+            currentObjet.setArchiver(false); // Ensure updated objects are not archived
+            Objet updatedObjet = objetRepository.save(currentObjet);
             return new ResponseEntity<>(updatedObjet, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error while updating object: {}", e.getMessage());
+            log.error("Error while updating object: {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
-    public ResponseEntity<?> deleteObjet(Long id) {
+    public ResponseEntity<?> archiveObjet(Long id) {
         try {
-            if (!objetRepository.existsById(id)) {
-                return new ResponseEntity<>("{\"message\":\"Object not found\"}", HttpStatus.NOT_FOUND);
+            Optional<Objet> objetOpt = objetRepository.findByIdAndArchiverFalse(id);
+            if (objetOpt.isEmpty()) {
+                log.error("Object with ID {} not found or already archived", id);
+                return new ResponseEntity<>("{\"message\":\"Object not found or already archived\"}",
+                        HttpStatus.NOT_FOUND);
             }
-            objetRepository.deleteById(id);
-            return new ResponseEntity<>("{\"message\":\"Object deleted successfully\"}", HttpStatus.OK);
+            Objet objet = objetOpt.get();
+            // Check if the object is referenced by any non-archived requete records
+            long requeteCount = objetRepository.countRequetesByObjetId(id);
+            if (requeteCount > 0) {
+                log.error("Cannot archive object with ID {} as it is associated with {} non-archived requetes", id,
+                        requeteCount);
+                return new ResponseEntity<>(
+                        "{\"message\":\"Cannot archive object as it is associated with non-archived requetes\"}",
+                        HttpStatus.BAD_REQUEST);
+            }
+            objet.setArchiver(true);
+            objetRepository.save(objet);
+            return new ResponseEntity<>("{\"message\":\"Object archived successfully\"}", HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error while deleting object: {}", e.getMessage());
+            log.error("Error while archiving object: {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

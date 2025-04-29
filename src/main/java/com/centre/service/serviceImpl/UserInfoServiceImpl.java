@@ -64,7 +64,7 @@ public class UserInfoServiceImpl implements UserInfoService {
                 return new ResponseEntity<>("{\"message\":\"Missing required Data\"}", HttpStatus.BAD_REQUEST);
             }
 
-            Optional<UserInfo> db = userInfoRepository.findByEmail(userInfo.getEmail());
+            Optional<UserInfo> db = userInfoRepository.findByEmailAndArchiverFalse(userInfo.getEmail());
             if (db.isPresent()) {
                 return new ResponseEntity<>("{\"message\":\"Email already exists\"}", HttpStatus.BAD_REQUEST);
             }
@@ -94,7 +94,7 @@ public class UserInfoServiceImpl implements UserInfoService {
                 }
                 userInfo.setProduit(produitOpt.get());
             } else {
-                Optional<Produit> anyProduitOpt = produitRepository.findByNom("Any");
+                Optional<Produit> anyProduitOpt = produitRepository.findByNomAndArchiverFalse("Any");
                 if (anyProduitOpt.isEmpty()) {
                     return new ResponseEntity<>("{\"message\":\"Default 'Any' product not found\"}",
                             HttpStatus.INTERNAL_SERVER_ERROR);
@@ -110,6 +110,7 @@ public class UserInfoServiceImpl implements UserInfoService {
             userInfo.setStatus("false");
             userInfo.setEmail(userInfo.getEmail().toLowerCase());
             userInfo.setIsDeletable("true");
+            userInfo.setArchiver(false); // Ensure new users are not archived
 
             userInfoRepository.save(userInfo);
             return new ResponseEntity<>("{\"message\":\"User created successfully\"}", HttpStatus.CREATED);
@@ -192,13 +193,13 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Override
     public ResponseEntity<?> updateAppuser(Long id, UserInfo updatedUser) {
         try {
-            Optional<UserInfo> optionalUser = userInfoRepository.findById(id);
+            Optional<UserInfo> optionalUser = userInfoRepository.findByIdAndArchiverFalse(id);
             if (optionalUser.isEmpty()) {
-                return new ResponseEntity<>("{\"message\":\"User not found\"}", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("{\"message\":\"User not found or archived\"}", HttpStatus.NOT_FOUND);
             }
 
             if (updatedUser.getEmail() != null) {
-                Optional<UserInfo> db = userInfoRepository.findByEmail(updatedUser.getEmail());
+                Optional<UserInfo> db = userInfoRepository.findByEmailAndArchiverFalse(updatedUser.getEmail());
                 if (db.isPresent() && !db.get().getId().equals(id)) {
                     return new ResponseEntity<>("{\"message\":\"Email already exists\"}", HttpStatus.BAD_REQUEST);
                 }
@@ -256,7 +257,7 @@ public class UserInfoServiceImpl implements UserInfoService {
                             HttpStatus.BAD_REQUEST);
                 }
             } else {
-                Optional<Produit> anyProduitOpt = produitRepository.findByNom("Any");
+                Optional<Produit> anyProduitOpt = produitRepository.findByNomAndArchiverFalse("Any");
                 if (anyProduitOpt.isEmpty()) {
                     return new ResponseEntity<>("{\"message\":\"Default 'Any' product not found\"}",
                             HttpStatus.INTERNAL_SERVER_ERROR);
@@ -275,6 +276,7 @@ public class UserInfoServiceImpl implements UserInfoService {
                         HttpStatus.BAD_REQUEST);
             }
 
+            user.setArchiver(false); // Ensure updated users are not archived
             userInfoRepository.save(user);
             return new ResponseEntity<>("{\"message\":\"User updated successfully\"}", HttpStatus.OK);
         } catch (Exception e) {
@@ -284,22 +286,25 @@ public class UserInfoServiceImpl implements UserInfoService {
     }
 
     @Override
-    public ResponseEntity<?> deleteAppuser(Long id) {
+    public ResponseEntity<?> archiveAppuser(Long id) {
         try {
-            Optional<UserInfo> optionalUser = userInfoRepository.findById(id);
+            Optional<UserInfo> optionalUser = userInfoRepository.findByIdAndArchiverFalse(id);
             if (optionalUser.isEmpty()) {
-                return new ResponseEntity<>("{\"message\":\"User not found\"}", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("{\"message\":\"User not found or already archived\"}",
+                        HttpStatus.NOT_FOUND);
             }
 
             UserInfo user = optionalUser.get();
             if (!"true".equals(user.getIsDeletable())) {
-                return new ResponseEntity<>("{\"message\":\"User is not deletable\"}", HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("{\"message\":\"User is not archivable\"}", HttpStatus.BAD_REQUEST);
             }
 
-            userInfoRepository.deleteById(id);
-            return new ResponseEntity<>("{\"message\":\"User deleted successfully\"}", HttpStatus.OK);
+            user.setArchiver(true);
+            user.setStatus("false"); // Prevent login
+            userInfoRepository.save(user);
+            return new ResponseEntity<>("{\"message\":\"User archived successfully\"}", HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error deleting user: {}", e.getMessage(), e);
+            log.error("Error archiving user: {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -312,9 +317,9 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Override
     public ResponseEntity<?> toggleStatus(Long id) {
         try {
-            Optional<UserInfo> optionalUser = userInfoRepository.findById(id);
+            Optional<UserInfo> optionalUser = userInfoRepository.findByIdAndArchiverFalse(id);
             if (optionalUser.isEmpty()) {
-                return new ResponseEntity<>("{\"message\":\"User not found\"}", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("{\"message\":\"User not found or archived\"}", HttpStatus.NOT_FOUND);
             }
 
             UserInfo user = optionalUser.get();

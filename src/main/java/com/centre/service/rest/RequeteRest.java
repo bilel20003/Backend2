@@ -28,6 +28,6 @@ public interface RequeteRest {
     @PutMapping("/updaterequete/{id}")
     ResponseEntity<?> updateRequete(@PathVariable Long id, @RequestBody Requete requete);
 
-    @DeleteMapping("/deleterequete/{id}")
-    ResponseEntity<?> deleteRequete(@PathVariable Long id);
+    @PutMapping("/archiverequete/{id}")
+    ResponseEntity<?> archiveRequete(@PathVariable Long id);
 }

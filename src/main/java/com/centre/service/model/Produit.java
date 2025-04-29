@@ -21,8 +21,14 @@ public class Produit implements Serializable {
     private Long id;
 
     private String nom;
+
     private String description;
+
     private String topologie;
+
     private Double prix;
+
+    @Column(nullable = false)
+    private boolean archiver = false;
 
 }

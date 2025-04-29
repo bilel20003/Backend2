@@ -48,4 +48,6 @@ public class Requete implements Serializable {
     @JoinColumn(name = "technicien_id")
     private UserInfo technicien; // Le guichetier qui traite la requête
 
+    @Column(nullable = false)
+    private boolean archiver = false;
 }

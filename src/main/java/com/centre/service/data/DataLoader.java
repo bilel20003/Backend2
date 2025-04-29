@@ -1,3 +1,4 @@
+// src/main/java/com/centre/service/data/DataLoader.java
 package com.centre.service.data;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,30 +41,33 @@ public class DataLoader implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         // Créer ou récupérer un ministère
-        Ministere ministere = ministereRepository.findByNomMinistere("Ministère de l'IT")
+        Ministere ministere = ministereRepository.findByNomMinistereAndArchiverFalse("Ministère de l'IT")
                 .orElseGet(() -> {
                     Ministere newMinistere = new Ministere();
                     newMinistere.setNomMinistere("Ministère de l'IT");
+                    newMinistere.setArchiver(false);
                     return ministereRepository.save(newMinistere);
                 });
 
         // Créer ou récupérer le service "Administration" lié au ministère
-        Servicee adminService = serviceeRepository.findByNomService("Administration")
+        Servicee adminService = serviceeRepository.findByNomServiceAndArchiverFalse("Administration")
                 .orElseGet(() -> {
                     Servicee newService = new Servicee();
                     newService.setNomService("Administration");
                     newService.setMinistere(ministere);
+                    newService.setArchiver(false);
                     return serviceeRepository.save(newService);
                 });
 
         // Créer ou récupérer le produit "Any" pour non-client
-        Produit anyProduit = produitRepository.findByNom("Any")
+        Produit anyProduit = produitRepository.findByNomAndArchiverFalse("Any")
                 .orElseGet(() -> {
                     Produit newProduit = new Produit();
                     newProduit.setNom("Any");
                     newProduit.setDescription("Placeholder product for non-client users");
                     newProduit.setTopologie("N/A");
                     newProduit.setPrix(0.0);
+                    newProduit.setArchiver(false);
                     return produitRepository.save(newProduit);
                 });
 
@@ -87,7 +91,7 @@ public class DataLoader implements ApplicationRunner {
         }
 
         // Créer l'admin
-        if (!userInfoRepository.findByEmail("admin@email.com").isPresent()) {
+        if (!userInfoRepository.findByEmailAndArchiverFalse("admin@email.com").isPresent()) {
             UserInfo admin = new UserInfo();
             admin.setName("admin");
             admin.setEmail("admin@email.com");
@@ -96,7 +100,8 @@ public class DataLoader implements ApplicationRunner {
             admin.setStatus("true");
             admin.setRole(adminRole);
             admin.setService(adminService);
-            admin.setProduit(anyProduit); // Use "Any" product for ADMIN
+            admin.setProduit(anyProduit);
+            admin.setArchiver(false);
 
             userInfoRepository.save(admin);
         }

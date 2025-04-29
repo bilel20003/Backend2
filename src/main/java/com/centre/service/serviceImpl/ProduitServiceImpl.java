@@ -2,6 +2,7 @@ package com.centre.service.serviceImpl;
 
 import com.centre.service.model.Produit;
 import com.centre.service.repository.ProduitRepository;
+import com.centre.service.repository.UserInfoRepository;
 import com.centre.service.service.ProduitService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,10 +22,13 @@ public class ProduitServiceImpl implements ProduitService {
     @Autowired
     private ProduitRepository produitRepository;
 
+    @Autowired
+    private UserInfoRepository userInfoRepository;
+
     @Override
     public ResponseEntity<?> getAllProduits() {
         try {
-            List<Produit> produits = produitRepository.findAll();
+            List<Produit> produits = produitRepository.findByArchiverFalse();
             return new ResponseEntity<>(produits, HttpStatus.OK);
         } catch (Exception e) {
             log.error("Error while retrieving all products: {}", e.getMessage(), e);
@@ -35,11 +39,11 @@ public class ProduitServiceImpl implements ProduitService {
     @Override
     public ResponseEntity<?> getProduitById(Long id) {
         try {
-            Optional<Produit> produit = produitRepository.findById(id);
+            Optional<Produit> produit = produitRepository.findByIdAndArchiverFalse(id);
             if (produit.isPresent()) {
                 return new ResponseEntity<>(produit.get(), HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("{\"message\":\"Product not found\"}", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("{\"message\":\"Product not found or archived\"}", HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
             log.error("Error while retrieving product by ID: {}", e.getMessage(), e);
@@ -51,13 +55,17 @@ public class ProduitServiceImpl implements ProduitService {
     public ResponseEntity<?> createProduit(Produit produit) {
         try {
             // Validation des données du produit
-            if (produit.getNom() == null || produit.getNom().isEmpty()) {
+            if (produit.getNom() == null || produit.getNom().trim().isEmpty()) {
                 return new ResponseEntity<>("{\"message\":\"Product name is required\"}", HttpStatus.BAD_REQUEST);
             }
             if (produit.getPrix() != null && produit.getPrix() < 0) {
                 return new ResponseEntity<>("{\"message\":\"Price cannot be negative\"}", HttpStatus.BAD_REQUEST);
             }
-            // Enregistrement du produit
+            Optional<Produit> existingProduit = produitRepository.findByNomAndArchiverFalse(produit.getNom());
+            if (existingProduit.isPresent()) {
+                return new ResponseEntity<>("{\"message\":\"Product name already exists\"}", HttpStatus.BAD_REQUEST);
+            }
+            produit.setArchiver(false); // Ensure new products are not archived
             Produit savedProduit = produitRepository.save(produit);
             return new ResponseEntity<>(savedProduit, HttpStatus.CREATED);
         } catch (Exception e) {
@@ -69,18 +77,36 @@ public class ProduitServiceImpl implements ProduitService {
     @Override
     public ResponseEntity<?> updateProduit(Long id, Produit produit) {
         try {
-            if (!produitRepository.existsById(id)) {
-                return new ResponseEntity<>("{\"message\":\"Product not found\"}", HttpStatus.NOT_FOUND);
+            Optional<Produit> optionalProduit = produitRepository.findByIdAndArchiverFalse(id);
+            if (optionalProduit.isEmpty()) {
+                return new ResponseEntity<>("{\"message\":\"Product not found or archived\"}", HttpStatus.NOT_FOUND);
             }
             // Validation des données du produit
-            if (produit.getNom() == null || produit.getNom().isEmpty()) {
-                return new ResponseEntity<>("{\"message\":\"Product name is required\"}", HttpStatus.BAD_REQUEST);
+            if (produit.getNom() != null && !produit.getNom().trim().isEmpty()) {
+                Optional<Produit> existingProduit = produitRepository.findByNomAndArchiverFalse(produit.getNom());
+                if (existingProduit.isPresent() && !existingProduit.get().getId().equals(id)) {
+                    return new ResponseEntity<>("{\"message\":\"Product name already exists\"}",
+                            HttpStatus.BAD_REQUEST);
+                }
             }
-            if (produit.getPrix() != null && produit.getPrix() < 0) {
-                return new ResponseEntity<>("{\"message\":\"Price cannot be negative\"}", HttpStatus.BAD_REQUEST);
+            Produit existing = optionalProduit.get();
+            if (produit.getNom() != null && !produit.getNom().trim().isEmpty()) {
+                existing.setNom(produit.getNom());
             }
-            produit.setId(id);
-            Produit updatedProduit = produitRepository.save(produit);
+            if (produit.getDescription() != null) {
+                existing.setDescription(produit.getDescription());
+            }
+            if (produit.getTopologie() != null) {
+                existing.setTopologie(produit.getTopologie());
+            }
+            if (produit.getPrix() != null) {
+                if (produit.getPrix() < 0) {
+                    return new ResponseEntity<>("{\"message\":\"Price cannot be negative\"}", HttpStatus.BAD_REQUEST);
+                }
+                existing.setPrix(produit.getPrix());
+            }
+            existing.setArchiver(false); // Ensure updated products are not archived
+            Produit updatedProduit = produitRepository.save(existing);
             return new ResponseEntity<>(updatedProduit, HttpStatus.OK);
         } catch (Exception e) {
             log.error("Error while updating product: {}", e.getMessage(), e);
@@ -89,21 +115,33 @@ public class ProduitServiceImpl implements ProduitService {
     }
 
     @Override
-    public ResponseEntity<?> deleteProduit(Long id) {
+    public ResponseEntity<?> archiveProduit(Long id) {
         try {
-            if (!produitRepository.existsById(id)) {
-                return new ResponseEntity<>("{\"message\":\"Product not found\"}", HttpStatus.NOT_FOUND);
+            Optional<Produit> optionalProduit = produitRepository.findByIdAndArchiverFalse(id);
+            if (optionalProduit.isEmpty()) {
+                return new ResponseEntity<>("{\"message\":\"Product not found or already archived\"}",
+                        HttpStatus.NOT_FOUND);
             }
-            // Check if the product is referenced by any user_info records
-            long userCount = produitRepository.countUsersByProduitId(id);
-            if (userCount > 0) {
-                return new ResponseEntity<>("{\"message\":\"Cannot delete product as it is associated with users\"}",
+            Produit produit = optionalProduit.get();
+            // Check if the product is 'Any' and associated with non-archived non-client
+            // users
+            if ("Any".equalsIgnoreCase(produit.getNom()) && userInfoRepository.countNonClientUsersByProduitId(id) > 0) {
+                return new ResponseEntity<>(
+                        "{\"message\":\"Cannot archive 'Any' product as it is associated with non-archived non-client users\"}",
                         HttpStatus.BAD_REQUEST);
             }
-            produitRepository.deleteById(id);
-            return new ResponseEntity<>("{\"message\":\"Product deleted successfully\"}", HttpStatus.OK);
+            // Check if the product is referenced by any non-archived user_info records
+            long userCount = produitRepository.countUsersByProduitId(id);
+            if (userCount > 0) {
+                return new ResponseEntity<>(
+                        "{\"message\":\"Cannot archive product as it is associated with non-archived users\"}",
+                        HttpStatus.BAD_REQUEST);
+            }
+            produit.setArchiver(true);
+            produitRepository.save(produit);
+            return new ResponseEntity<>("{\"message\":\"Product archived successfully\"}", HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error while deleting product: {}", e.getMessage(), e);
+            log.error("Error while archiving product: {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

@@ -19,6 +19,6 @@ public interface ProduitRest {
     @PutMapping("/updateproduit/{id}")
     ResponseEntity<?> updateProduit(@PathVariable Long id, @RequestBody Produit produit);
 
-    @DeleteMapping("/deleteproduit/{id}")
-    ResponseEntity<?> deleteProduit(@PathVariable Long id);
+    @PutMapping("/archiveproduit/{id}")
+    ResponseEntity<?> archiveProduit(@PathVariable Long id);
 }

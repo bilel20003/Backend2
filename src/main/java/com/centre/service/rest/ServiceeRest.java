@@ -16,7 +16,6 @@ public interface ServiceeRest {
     @PutMapping("/updateService/{id}")
     ResponseEntity<?> updateService(@PathVariable Long id, @RequestBody Servicee service);
 
-    @DeleteMapping("/deleteService/{id}")
-    ResponseEntity<?> deleteService(@PathVariable Long id);
-
+    @PutMapping("/archiveService/{id}")
+    ResponseEntity<?> archiveService(@PathVariable Long id);
 }

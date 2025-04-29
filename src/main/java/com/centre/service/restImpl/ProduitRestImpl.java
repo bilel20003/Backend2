@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.centre.service.model.Produit;
 import com.centre.service.rest.ProduitRest;
 import com.centre.service.service.ProduitService;
@@ -25,8 +24,8 @@ public class ProduitRestImpl implements ProduitRest {
             return produitService.createProduit(produit);
         } catch (Exception ex) {
             log.error("Error in createProduit: {}", ex);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -35,8 +34,8 @@ public class ProduitRestImpl implements ProduitRest {
             return produitService.getAllProduits();
         } catch (Exception ex) {
             log.error("Error in getAllProduits: {}", ex);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -45,8 +44,8 @@ public class ProduitRestImpl implements ProduitRest {
             return produitService.getProduitById(id);
         } catch (Exception ex) {
             log.error("Error in getProduitById: {}", ex);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -60,11 +59,11 @@ public class ProduitRestImpl implements ProduitRest {
     }
 
     @Override
-    public ResponseEntity<?> deleteProduit(Long id) {
+    public ResponseEntity<?> archiveProduit(Long id) {
         try {
-            return produitService.deleteProduit(id);
+            return produitService.archiveProduit(id);
         } catch (Exception ex) {
-            log.error("Error in deleteProduit: {}", ex);
+            log.error("Error in archiveProduit: {}", ex);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

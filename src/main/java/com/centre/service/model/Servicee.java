@@ -22,4 +22,7 @@ public class Servicee implements java.io.Serializable {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "ministere_id", nullable = false)
     private Ministere ministere;
+
+    @Column(nullable = false)
+    private boolean archiver = false;
 }

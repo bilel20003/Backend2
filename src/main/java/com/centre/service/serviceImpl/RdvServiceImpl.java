@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -34,32 +35,71 @@ public class RdvServiceImpl implements RdvService {
     @Autowired
     private ScheduleService scheduleService;
 
+    private UserInfo findTechnicianWithLeastRdvs() {
+        List<UserInfo> technicians = userInfoRepository.findByRoleNameAndArchiverFalse("TECHNICIEN");
+        UserInfo selectedTechnician = null;
+        long minRdvs = Long.MAX_VALUE;
+
+        for (UserInfo technician : technicians) {
+            long rdvCount = rdvRepository.countRdvsByTechnicienId(technician.getId());
+            if (rdvCount < minRdvs) {
+                minRdvs = rdvCount;
+                selectedTechnician = technician;
+            }
+        }
+        return selectedTechnician;
+    }
+
+    private void updateRdvStatus(Rdv rdv) {
+        if (rdv.getStatus() == null || !rdv.getStatus().equals("TERMINE")) {
+            Date now = new Date();
+            if (rdv.getDateSouhaitee() != null && rdv.getDateSouhaitee().before(now)) {
+                rdv.setStatus("TERMINE");
+                rdvRepository.save(rdv);
+                log.info("RDV ID {} status updated to TERMINE due to past date", rdv.getId());
+            }
+        }
+    }
+
     @Override
     public ResponseEntity<?> addRdv(Rdv rdv) {
         try {
             // Validate client
             if (rdv.getClient() == null || rdv.getClient().getId() == null) {
+                log.error("Client is missing or has no ID");
                 return new ResponseEntity<>("{\"message\":\"L'objet client est requis\"}", HttpStatus.BAD_REQUEST);
             }
-            Optional<UserInfo> clientOpt = userInfoRepository.findById(rdv.getClient().getId());
+            Optional<UserInfo> clientOpt = userInfoRepository.findByIdAndArchiverFalse(rdv.getClient().getId());
             if (clientOpt.isEmpty() || !clientOpt.get().getRole().getName().equals("CLIENT")) {
-                return new ResponseEntity<>("{\"message\":\"Client non trouvé ou rôle incorrect\"}",
+                log.error("Client with ID {} not found, archived, or not a CLIENT", rdv.getClient().getId());
+                return new ResponseEntity<>("{\"message\":\"Client non trouvé, archivé ou rôle incorrect\"}",
                         HttpStatus.NOT_FOUND);
+            }
+            rdv.setClient(clientOpt.get());
+
+            // Check client RDV limit
+            long pendingRdvs = rdvRepository.countPendingRdvsByClientId(rdv.getClient().getId());
+            if (pendingRdvs >= 3) {
+                log.error("Client ID {} has reached the maximum of 3 pending RDVs", rdv.getClient().getId());
+                return new ResponseEntity<>("{\"message\":\"Limite de 3 rendez-vous en attente atteinte\"}",
+                        HttpStatus.BAD_REQUEST);
             }
 
             // Validate dateSouhaitee
             if (rdv.getDateSouhaitee() == null) {
+                log.error("DateSouhaitee is required");
                 return new ResponseEntity<>("{\"message\":\"Date souhaitée est requise\"}", HttpStatus.BAD_REQUEST);
             }
 
             // Check if the slot is available
             LocalDate date = rdv.getDateSouhaitee().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             LocalTime time = rdv.getDateSouhaitee().toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
-                    .truncatedTo(java.time.temporal.ChronoUnit.HOURS); // Round to hour
+                    .truncatedTo(java.time.temporal.ChronoUnit.HOURS);
             String dayOfWeek = date.getDayOfWeek().toString();
             List<LocalTime> availableSlots = scheduleService.getAvailableSlots(dayOfWeek, date);
 
             if (!availableSlots.contains(time)) {
+                log.error("Selected time slot {} on {} is not available", time, date);
                 return new ResponseEntity<>("{\"message\":\"Le créneau horaire sélectionné n'est pas disponible\"}",
                         HttpStatus.BAD_REQUEST);
             }
@@ -67,23 +107,33 @@ public class RdvServiceImpl implements RdvService {
             // Check for double-booking
             java.sql.Timestamp startOfSlot = java.sql.Timestamp.valueOf(date.atTime(time));
             java.sql.Timestamp endOfSlot = java.sql.Timestamp.valueOf(date.atTime(time.plusHours(1)));
-            List<Rdv> existingRdvs = rdvRepository.findAll().stream()
+            List<Rdv> existingRdvs = rdvRepository.findByArchiverFalse().stream()
                     .filter(r -> r.getDateSouhaitee().after(startOfSlot) && r.getDateSouhaitee().before(endOfSlot))
                     .collect(Collectors.toList());
             if (!existingRdvs.isEmpty()) {
+                log.error("Time slot {} on {} is already booked", time, date);
                 return new ResponseEntity<>("{\"message\":\"Ce créneau est déjà réservé\"}", HttpStatus.CONFLICT);
             }
 
-            // Set client and dateEnvoi
-            rdv.setClient(clientOpt.get());
-            rdv.setDateEnvoi(new java.util.Date());
+            // Assign technician
+            UserInfo technician = findTechnicianWithLeastRdvs();
+            if (technician == null) {
+                log.error("No available technicians found");
+                return new ResponseEntity<>("{\"message\":\"Aucun technicien disponible\"}", HttpStatus.BAD_REQUEST);
+            }
+            rdv.setTechnicien(technician);
+
+            // Set default values
+            rdv.setStatus("EN_ATTENTE");
+            rdv.setDateEnvoi(new Date());
+            rdv.setArchiver(false);
 
             // Save the appointment
             rdvRepository.save(rdv);
             log.info("Rendez-vous ajouté avec succès : {}", rdv);
             return new ResponseEntity<>("{\"message\":\"Rendez-vous ajouté avec succès\"}", HttpStatus.CREATED);
         } catch (Exception e) {
-            log.error("Erreur lors de l'ajout du rendez-vous : {}", e.getMessage());
+            log.error("Erreur lors de l'ajout du rendez-vous : {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Erreur lors de l'ajout du rendez-vous\"}",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -92,11 +142,31 @@ public class RdvServiceImpl implements RdvService {
     @Override
     public ResponseEntity<?> getAllRdvs() {
         try {
-            List<Rdv> rdvs = rdvRepository.findAll();
+            List<Rdv> rdvs = rdvRepository.findByArchiverFalse();
+            rdvs.forEach(this::updateRdvStatus);
             return new ResponseEntity<>(rdvs, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Erreur lors de la récupération des rendez-vous : {}", e.getMessage());
+            log.error("Erreur lors de la récupération des rendez-vous : {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Erreur lors de la récupération des rendez-vous\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> getRdvById(Long id) {
+        try {
+            Optional<Rdv> rdvOpt = rdvRepository.findByIdAndArchiverFalse(id);
+            if (rdvOpt.isEmpty()) {
+                log.warn("Rendez-vous avec l'ID {} non trouvé ou archivé", id);
+                return new ResponseEntity<>("{\"message\":\"Rendez-vous non trouvé ou archivé\"}",
+                        HttpStatus.NOT_FOUND);
+            }
+            Rdv rdv = rdvOpt.get();
+            updateRdvStatus(rdv);
+            return new ResponseEntity<>(rdv, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération du rendez-vous ID {} : {}", id, e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Erreur lors de la récupération du rendez-vous\"}",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -104,30 +174,44 @@ public class RdvServiceImpl implements RdvService {
     @Override
     public ResponseEntity<?> updateRdv(Long id, Rdv updatedRdv) {
         try {
-            // Vérifiez si le rendez-vous existe
-            Optional<Rdv> existingRdvOpt = rdvRepository.findById(id);
+            Optional<Rdv> existingRdvOpt = rdvRepository.findByIdAndArchiverFalse(id);
             if (existingRdvOpt.isEmpty()) {
-                log.warn("Tentative de mise à jour d'un rendez-vous qui n'existe pas avec l'ID: {}", id);
-                return new ResponseEntity<>("{\"message\":\"Rendez-vous non trouvé\"}", HttpStatus.NOT_FOUND);
+                log.warn("Rendez-vous avec l'ID {} non trouvé ou archivé", id);
+                return new ResponseEntity<>("{\"message\":\"Rendez-vous non trouvé ou archivé\"}",
+                        HttpStatus.NOT_FOUND);
             }
 
-            // Récupérez le rendez-vous actuel
             Rdv existingRdv = existingRdvOpt.get();
-
-            // Vérifiez si le client est fourni dans updatedRdv
-            if (updatedRdv.getClient() != null && updatedRdv.getClient().getId() != null) {
-                Optional<UserInfo> clientOpt = userInfoRepository.findById(updatedRdv.getClient().getId());
-                if (clientOpt.isPresent() && clientOpt.get().getRole().getName().equals("CLIENT")) {
-                    existingRdv.setClient(clientOpt.get());
-                } else {
-                    return new ResponseEntity<>("{\"message\":\"Client non trouvé ou rôle incorrect\"}",
-                            HttpStatus.NOT_FOUND);
-                }
-            }
-
-            // Mettez à jour les autres champs
             boolean isUpdated = false;
 
+            // Validate client if provided
+            if (updatedRdv.getClient() != null && updatedRdv.getClient().getId() != null) {
+                Optional<UserInfo> clientOpt = userInfoRepository
+                        .findByIdAndArchiverFalse(updatedRdv.getClient().getId());
+                if (clientOpt.isEmpty() || !clientOpt.get().getRole().getName().equals("CLIENT")) {
+                    log.error("Client with ID {} not found, archived, or not a CLIENT", updatedRdv.getClient().getId());
+                    return new ResponseEntity<>("{\"message\":\"Client non trouvé, archivé ou rôle incorrect\"}",
+                            HttpStatus.NOT_FOUND);
+                }
+                existingRdv.setClient(clientOpt.get());
+                isUpdated = true;
+            }
+
+            // Validate technician if provided
+            if (updatedRdv.getTechnicien() != null && updatedRdv.getTechnicien().getId() != null) {
+                Optional<UserInfo> technicienOpt = userInfoRepository
+                        .findByIdAndArchiverFalse(updatedRdv.getTechnicien().getId());
+                if (technicienOpt.isEmpty() || !technicienOpt.get().getRole().getName().equals("TECHNICIEN")) {
+                    log.error("Technicien with ID {} not found, archived, or not a TECHNICIEN",
+                            updatedRdv.getTechnicien().getId());
+                    return new ResponseEntity<>("{\"message\":\"Technicien non trouvé, archivé ou rôle incorrect\"}",
+                            HttpStatus.BAD_REQUEST);
+                }
+                existingRdv.setTechnicien(technicienOpt.get());
+                isUpdated = true;
+            }
+
+            // Update other fields
             if (updatedRdv.getDateSouhaitee() != null) {
                 existingRdv.setDateSouhaitee(updatedRdv.getDateSouhaitee());
                 isUpdated = true;
@@ -139,6 +223,23 @@ public class RdvServiceImpl implements RdvService {
             }
 
             if (updatedRdv.getStatus() != null && !updatedRdv.getStatus().trim().isEmpty()) {
+                if (!updatedRdv.getStatus().equals("EN_ATTENTE") && !updatedRdv.getStatus().equals("TERMINE")
+                        && !updatedRdv.getStatus().equals("REFUSE")) {
+                    log.error("Invalid status {} for RDV ID {}", updatedRdv.getStatus(), id);
+                    return new ResponseEntity<>(
+                            "{\"message\":\"Statut invalide. Valeurs autorisées: EN_ATTENTE, TERMINE, REFUSE\"}",
+                            HttpStatus.BAD_REQUEST);
+                }
+                // Check client RDV limit if updating to EN_ATTENTE
+                if (updatedRdv.getStatus().equals("EN_ATTENTE") && !existingRdv.getStatus().equals("EN_ATTENTE")) {
+                    long pendingRdvs = rdvRepository.countPendingRdvsByClientId(existingRdv.getClient().getId());
+                    if (pendingRdvs >= 3) {
+                        log.error("Client ID {} has reached the maximum of 3 pending RDVs",
+                                existingRdv.getClient().getId());
+                        return new ResponseEntity<>("{\"message\":\"Limite de 3 rendez-vous en attente atteinte\"}",
+                                HttpStatus.BAD_REQUEST);
+                    }
+                }
                 existingRdv.setStatus(updatedRdv.getStatus());
                 isUpdated = true;
             }
@@ -153,38 +254,40 @@ public class RdvServiceImpl implements RdvService {
                 isUpdated = true;
             }
 
-            // Si aucune donnée n'a été mise à jour, renvoie un message d'erreur
             if (!isUpdated) {
-                log.warn("Aucun champ valide fourni pour la mise à jour du rendez-vous avec l'ID: {}", id);
+                log.warn("Aucun champ valide fourni pour la mise à jour du rendez-vous ID {}", id);
                 return new ResponseEntity<>("{\"message\":\"Aucun champ valide fourni pour la mise à jour\"}",
                         HttpStatus.BAD_REQUEST);
             }
 
-            // Sauvegarde le rendez-vous mis à jour
+            existingRdv.setArchiver(false);
             rdvRepository.save(existingRdv);
             log.info("Rendez-vous mis à jour avec succès pour l'ID: {}", id);
             return new ResponseEntity<>("{\"message\":\"Rendez-vous mis à jour avec succès\"}", HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Erreur lors de la mise à jour du rendez-vous avec l'ID: {}. Erreur: {}", id, e.getMessage());
+            log.error("Erreur lors de la mise à jour du rendez-vous ID {} : {}", id, e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Erreur lors de la mise à jour du rendez-vous\"}",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
-    public ResponseEntity<?> deleteRdv(Long id) {
+    public ResponseEntity<?> archiveRdv(Long id) {
         try {
-            if (rdvRepository.existsById(id)) {
-                rdvRepository.deleteById(id);
-                log.info("Rendez-vous supprimé avec succès pour l'ID: {}", id);
-                return new ResponseEntity<>("{\"message\":\"Rendez-vous supprimé avec succès\"}", HttpStatus.OK);
-            } else {
-                log.warn("Tentative de suppression d'un rendez-vous qui n'existe pas avec l'ID: {}", id);
-                return new ResponseEntity<>("{\"message\":\"Rendez-vous non trouvé\"}", HttpStatus.NOT_FOUND);
+            Optional<Rdv> rdvOpt = rdvRepository.findByIdAndArchiverFalse(id);
+            if (rdvOpt.isEmpty()) {
+                log.warn("Rendez-vous avec l'ID {} non trouvé ou déjà archivé", id);
+                return new ResponseEntity<>("{\"message\":\"Rendez-vous non trouvé ou déjà archivé\"}",
+                        HttpStatus.NOT_FOUND);
             }
+            Rdv rdv = rdvOpt.get();
+            rdv.setArchiver(true);
+            rdvRepository.save(rdv);
+            log.info("Rendez-vous archivé avec succès pour l'ID: {}", id);
+            return new ResponseEntity<>("{\"message\":\"Rendez-vous archivé avec succès\"}", HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Erreur lors de la suppression du rendez-vous avec l'ID: {}. Erreur: {}", id, e.getMessage());
-            return new ResponseEntity<>("{\"message\":\"Erreur lors de la suppression du rendez-vous\"}",
+            log.error("Erreur lors de l'archivage du rendez-vous ID {} : {}", id, e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Erreur lors de l'archivage du rendez-vous\"}",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -192,28 +295,27 @@ public class RdvServiceImpl implements RdvService {
     @Override
     public ResponseEntity<?> refuseRdv(Long id, Long guichetierId) {
         try {
-            // Verify guichetier
-            Optional<UserInfo> guichetierOpt = userInfoRepository.findById(guichetierId);
+            Optional<UserInfo> guichetierOpt = userInfoRepository.findByIdAndArchiverFalse(guichetierId);
             if (guichetierOpt.isEmpty() || !guichetierOpt.get().getRole().getName().equals("GUICHETIER")) {
-                return new ResponseEntity<>("{\"message\":\"Guichetier non trouvé ou rôle incorrect\"}",
+                log.error("Guichetier with ID {} not found, archived, or not a GUICHETIER", guichetierId);
+                return new ResponseEntity<>("{\"message\":\"Guichetier non trouvé, archivé ou rôle incorrect\"}",
                         HttpStatus.NOT_FOUND);
             }
 
-            // Verify RDV
-            Optional<Rdv> rdvOpt = rdvRepository.findById(id);
+            Optional<Rdv> rdvOpt = rdvRepository.findByIdAndArchiverFalse(id);
             if (rdvOpt.isEmpty()) {
-                log.warn("Tentative de refus d'un rendez-vous qui n'existe pas avec l'ID: {}", id);
-                return new ResponseEntity<>("{\"message\":\"Rendez-vous non trouvé\"}", HttpStatus.NOT_FOUND);
+                log.warn("Rendez-vous avec l'ID {} non trouvé ou archivé", id);
+                return new ResponseEntity<>("{\"message\":\"Rendez-vous non trouvé ou archivé\"}",
+                        HttpStatus.NOT_FOUND);
             }
 
-            // Update status to REFUSE
             Rdv rdv = rdvOpt.get();
             rdv.setStatus("REFUSE");
             rdvRepository.save(rdv);
             log.info("Rendez-vous refusé avec succès pour l'ID: {} par guichetier: {}", id, guichetierId);
             return new ResponseEntity<>("{\"message\":\"Rendez-vous refusé avec succès\"}", HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Erreur lors du refus du rendez-vous avec l'ID: {}. Erreur: {}", id, e.getMessage());
+            log.error("Erreur lors du refus du rendez-vous ID {} : {}", id, e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Erreur lors du refus du rendez-vous\"}",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }

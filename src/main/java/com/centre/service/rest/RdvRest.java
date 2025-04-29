@@ -13,11 +13,14 @@ public interface RdvRest {
     @GetMapping
     ResponseEntity<?> getAllRdvs();
 
+    @GetMapping("/{id}")
+    ResponseEntity<?> getRdvById(@PathVariable Long id);
+
     @PutMapping("/{id}")
     ResponseEntity<?> updateRdv(@PathVariable Long id, @RequestBody Rdv rdv);
 
-    @DeleteMapping("/{id}")
-    ResponseEntity<?> deleteRdv(@PathVariable Long id);
+    @PutMapping("/{id}/archive")
+    ResponseEntity<?> archiveRdv(@PathVariable Long id);
 
     @PutMapping("/{id}/refuse")
     ResponseEntity<?> refuseRdv(@PathVariable Long id, @RequestParam Long guichetierId);

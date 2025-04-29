@@ -9,7 +9,7 @@ import com.centre.service.model.UserInfo;
 public interface UserInfoRest {
 
     @PostMapping(path = "/addNewAppuser")
-    ResponseEntity<?> addNewAppuser(@RequestBody(required = true) UserInfo UserInfo);
+    ResponseEntity<?> addNewAppuser(@RequestBody(required = true) UserInfo userInfo);
 
     @PostMapping(path = "/login")
     ResponseEntity<?> login(@RequestBody(required = true) AuthRequest authRequest);
@@ -23,8 +23,8 @@ public interface UserInfoRest {
     @PutMapping("/updateAppuser/{id}")
     ResponseEntity<?> updateAppuser(@PathVariable Long id, @RequestBody UserInfo userInfo);
 
-    @DeleteMapping("/deleteAppuser/{id}")
-    ResponseEntity<?> deleteAppuser(@PathVariable Long id);
+    @PutMapping("/archiveAppuser/{id}")
+    ResponseEntity<?> archiveAppuser(@PathVariable Long id);
 
     @GetMapping(path = "/checktoken")
     ResponseEntity<?> checkToken();

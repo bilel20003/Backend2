@@ -49,11 +49,11 @@ public class ServiceeRestImpl implements ServiceeRest {
     }
 
     @Override
-    public ResponseEntity<?> deleteService(Long id) {
+    public ResponseEntity<?> archiveService(Long id) {
         try {
-            return serviceService.deleteService(id);
+            return serviceService.archiveService(id);
         } catch (Exception ex) {
-            log.error("Error in deleteService: {}", ex.getMessage());
+            log.error("Error in archiveService: {}", ex.getMessage());
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

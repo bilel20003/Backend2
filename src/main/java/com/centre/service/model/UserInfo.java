@@ -39,6 +39,9 @@ public class UserInfo implements Serializable {
     @JoinColumn(name = "service_id", nullable = false)
     private Servicee service;
 
+    @Column(nullable = false)
+    private boolean archiver = false;
+
     // Constructeur pour UserInfo
     public UserInfo(Long id, String name, String email, String status, Role role, Servicee service) {
         this.id = id;
@@ -47,5 +50,6 @@ public class UserInfo implements Serializable {
         this.status = status;
         this.role = role;
         this.service = service;
+        this.archiver = false;
     }
 }

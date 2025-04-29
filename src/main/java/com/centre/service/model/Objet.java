@@ -24,4 +24,7 @@ public class Objet implements Serializable {
     @ManyToOne
     @JoinColumn(name = "produit_id", nullable = false)
     private Produit produit; // Relation avec le produit
+
+    @Column(nullable = false)
+    private boolean archiver = false;
 }

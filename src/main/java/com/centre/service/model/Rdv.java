@@ -36,5 +36,12 @@ public class Rdv implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "client_id")
-    private UserInfo client; // Le client qui a créé le rendez-vous
+    private UserInfo client;
+
+    @ManyToOne
+    @JoinColumn(name = "technicien_id")
+    private UserInfo technicien;
+
+    @Column(nullable = false)
+    private boolean archiver = false;
 }

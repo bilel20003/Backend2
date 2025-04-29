@@ -49,11 +49,11 @@ public class MinistereRestImpl implements MinistereRest {
     }
 
     @Override
-    public ResponseEntity<?> deleteMinistere(Long id) {
+    public ResponseEntity<?> archiveMinistere(Long id) {
         try {
-            return ministereService.deleteMinistere(id);
+            return ministereService.archiveMinistere(id);
         } catch (Exception ex) {
-            log.error("Error in deleteMinistere: {}", ex.getMessage());
+            log.error("Error in archiveMinistere: {}", ex.getMessage());
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

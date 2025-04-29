@@ -8,9 +8,11 @@ public interface RdvService {
 
     ResponseEntity<?> getAllRdvs();
 
+    ResponseEntity<?> getRdvById(Long id);
+
     ResponseEntity<?> updateRdv(Long id, Rdv rdv);
 
-    ResponseEntity<?> deleteRdv(Long id);
+    ResponseEntity<?> archiveRdv(Long id);
 
     ResponseEntity<?> refuseRdv(Long id, Long guichetierId);
 }

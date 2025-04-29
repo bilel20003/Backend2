@@ -1,8 +1,8 @@
 package com.centre.service.rest;
 
+import com.centre.service.model.Objet;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.centre.service.model.Objet;
 
 @RequestMapping(path = "/api/objets")
 public interface ObjetRest {
@@ -19,6 +19,6 @@ public interface ObjetRest {
     @PutMapping("/updateobjet/{id}")
     ResponseEntity<?> updateObjet(@PathVariable Long id, @RequestBody Objet objet);
 
-    @DeleteMapping("/deleteobjet/{id}")
-    ResponseEntity<?> deleteObjet(@PathVariable Long id);
+    @PutMapping("/archiveobjet/{id}")
+    ResponseEntity<?> archiveObjet(@PathVariable Long id);
 }

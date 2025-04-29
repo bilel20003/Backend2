@@ -13,5 +13,5 @@ public interface ProduitService {
 
     ResponseEntity<?> updateProduit(Long id, Produit produit);
 
-    ResponseEntity<?> deleteProduit(Long id);
+    ResponseEntity<?> archiveProduit(Long id);
 }

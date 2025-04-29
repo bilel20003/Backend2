@@ -9,6 +9,7 @@ import com.centre.service.repository.ServiceeRepository;
 import com.centre.service.service.ServiceeService;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ServiceeServiceImpl implements ServiceeService {
@@ -19,10 +20,23 @@ public class ServiceeServiceImpl implements ServiceeService {
     @Override
     public ResponseEntity<?> addNewService(Servicee service) {
         try {
+            if (service.getNomService() == null || service.getNomService().trim().isEmpty()) {
+                return new ResponseEntity<>("{\"message\":\"Service name is required\"}", HttpStatus.BAD_REQUEST);
+            }
+            if (service.getMinistere() == null || service.getMinistere().getId() == null) {
+                return new ResponseEntity<>("{\"message\":\"Ministere is required\"}", HttpStatus.BAD_REQUEST);
+            }
+            Optional<Servicee> existingService = serviceRepository
+                    .findByNomServiceAndArchiverFalse(service.getNomService());
+            if (existingService.isPresent()) {
+                return new ResponseEntity<>("{\"message\":\"Service name already exists\"}", HttpStatus.BAD_REQUEST);
+            }
+            service.setArchiver(false); // Ensure new services are not archived
             serviceRepository.save(service);
             return new ResponseEntity<>("{\"message\":\"Service created successfully\"}", HttpStatus.CREATED);
         } catch (Exception e) {
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong: " + e.getMessage() + "\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -32,34 +46,57 @@ public class ServiceeServiceImpl implements ServiceeService {
             List<Servicee> services = serviceRepository.findAllWithMinistere();
             return new ResponseEntity<>(services, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong: " + e.getMessage() + "\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public ResponseEntity<?> updateService(Long id, Servicee service) {
         try {
-            if (!serviceRepository.existsById(id)) {
-                return new ResponseEntity<>("{\"message\":\"Service not found\"}", HttpStatus.NOT_FOUND);
+            Optional<Servicee> optionalService = serviceRepository.findByIdAndArchiverFalse(id);
+            if (optionalService.isEmpty()) {
+                return new ResponseEntity<>("{\"message\":\"Service not found or archived\"}", HttpStatus.NOT_FOUND);
             }
-            service.setId(id);
-            serviceRepository.save(service);
+            if (service.getNomService() != null && !service.getNomService().trim().isEmpty()) {
+                Optional<Servicee> existingService = serviceRepository
+                        .findByNomServiceAndArchiverFalse(service.getNomService());
+                if (existingService.isPresent() && !existingService.get().getId().equals(id)) {
+                    return new ResponseEntity<>("{\"message\":\"Service name already exists\"}",
+                            HttpStatus.BAD_REQUEST);
+                }
+            }
+            Servicee existing = optionalService.get();
+            if (service.getNomService() != null && !service.getNomService().trim().isEmpty()) {
+                existing.setNomService(service.getNomService());
+            }
+            if (service.getMinistere() != null && service.getMinistere().getId() != null) {
+                existing.setMinistere(service.getMinistere());
+            }
+            existing.setArchiver(false); // Ensure updated services are not archived
+            serviceRepository.save(existing);
             return new ResponseEntity<>("{\"message\":\"Service updated successfully\"}", HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong: " + e.getMessage() + "\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
-    public ResponseEntity<?> deleteService(Long id) {
+    public ResponseEntity<?> archiveService(Long id) {
         try {
-            if (!serviceRepository.existsById(id)) {
-                return new ResponseEntity<>("{\"message\":\"Service not found\"}", HttpStatus.NOT_FOUND);
+            Optional<Servicee> optionalService = serviceRepository.findByIdAndArchiverFalse(id);
+            if (optionalService.isEmpty()) {
+                return new ResponseEntity<>("{\"message\":\"Service not found or already archived\"}",
+                        HttpStatus.NOT_FOUND);
             }
-            serviceRepository.deleteById(id);
-            return new ResponseEntity<>("{\"message\":\"Service deleted successfully\"}", HttpStatus.OK);
+            Servicee service = optionalService.get();
+            service.setArchiver(true);
+            serviceRepository.save(service);
+            return new ResponseEntity<>("{\"message\":\"Service archived successfully\"}", HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong: " + e.getMessage() + "\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

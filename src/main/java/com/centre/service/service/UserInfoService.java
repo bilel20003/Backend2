@@ -8,7 +8,7 @@ import com.centre.service.model.UserInfo;
 @Service
 public interface UserInfoService {
 
-    ResponseEntity<?> addNewAppuser(UserInfo UserInfo);
+    ResponseEntity<?> addNewAppuser(UserInfo userInfo);
 
     ResponseEntity<?> login(AuthRequest authRequest);
 
@@ -18,7 +18,7 @@ public interface UserInfoService {
 
     ResponseEntity<?> updateAppuser(Long id, UserInfo userInfo);
 
-    ResponseEntity<?> deleteAppuser(Long id);
+    ResponseEntity<?> archiveAppuser(Long id);
 
     ResponseEntity<?> checkToken();
 

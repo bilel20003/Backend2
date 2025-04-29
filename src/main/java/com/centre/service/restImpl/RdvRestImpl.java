@@ -5,9 +5,6 @@ import com.centre.service.rest.RdvRest;
 import com.centre.service.service.RdvService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -17,7 +14,7 @@ public class RdvRestImpl implements RdvRest {
     private RdvService rdvService;
 
     @Override
-    public ResponseEntity<?> addRdv(@RequestBody Rdv rdv) {
+    public ResponseEntity<?> addRdv(Rdv rdv) {
         return rdvService.addRdv(rdv);
     }
 
@@ -27,17 +24,22 @@ public class RdvRestImpl implements RdvRest {
     }
 
     @Override
-    public ResponseEntity<?> updateRdv(@PathVariable Long id, @RequestBody Rdv rdv) {
+    public ResponseEntity<?> getRdvById(Long id) {
+        return rdvService.getRdvById(id);
+    }
+
+    @Override
+    public ResponseEntity<?> updateRdv(Long id, Rdv rdv) {
         return rdvService.updateRdv(id, rdv);
     }
 
     @Override
-    public ResponseEntity<?> deleteRdv(@PathVariable Long id) {
-        return rdvService.deleteRdv(id);
+    public ResponseEntity<?> archiveRdv(Long id) {
+        return rdvService.archiveRdv(id);
     }
 
     @Override
-    public ResponseEntity<?> refuseRdv(@PathVariable Long id, @RequestParam Long guichetierId) {
+    public ResponseEntity<?> refuseRdv(Long id, Long guichetierId) {
         return rdvService.refuseRdv(id, guichetierId);
     }
 }

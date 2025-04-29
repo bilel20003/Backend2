@@ -11,5 +11,5 @@ public interface ServiceeService {
 
     ResponseEntity<?> updateService(Long id, Servicee service);
 
-    ResponseEntity<?> deleteService(Long id);
+    ResponseEntity<?> archiveService(Long id);
 }

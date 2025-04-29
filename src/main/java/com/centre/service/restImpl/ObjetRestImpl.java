@@ -1,15 +1,14 @@
 package com.centre.service.restImpl;
 
+import com.centre.service.model.Objet;
+import com.centre.service.rest.ObjetRest;
+import com.centre.service.service.ObjetService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.centre.service.model.Objet;
-import com.centre.service.rest.ObjetRest;
-import com.centre.service.service.ObjetService;
 
 @RestController
 public class ObjetRestImpl implements ObjetRest {
@@ -24,9 +23,9 @@ public class ObjetRestImpl implements ObjetRest {
         try {
             return objetService.createObjet(objet);
         } catch (Exception ex) {
-            log.error("Error in createObjet: {}", ex);
+            log.error("Error in createObjet: {}", ex.getMessage(), ex);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -34,9 +33,9 @@ public class ObjetRestImpl implements ObjetRest {
         try {
             return objetService.getAllObjets();
         } catch (Exception ex) {
-            log.error("Error in getAllObjets: {}", ex);
+            log.error("Error in getAllObjets: {}", ex.getMessage(), ex);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -44,9 +43,9 @@ public class ObjetRestImpl implements ObjetRest {
         try {
             return objetService.getObjetById(id);
         } catch (Exception ex) {
-            log.error("Error in getObjetById: {}", ex);
+            log.error("Error in getObjetById: {}", ex.getMessage(), ex);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -54,17 +53,17 @@ public class ObjetRestImpl implements ObjetRest {
         try {
             return objetService.updateObjet(id, objet);
         } catch (Exception ex) {
-            log.error("Error in updateObjet: {}", ex);
+            log.error("Error in updateObjet: {}", ex.getMessage(), ex);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
-    public ResponseEntity<?> deleteObjet(Long id) {
+    public ResponseEntity<?> archiveObjet(Long id) {
         try {
-            return objetService.deleteObjet(id);
+            return objetService.archiveObjet(id);
         } catch (Exception ex) {
-            log.error("Error in deleteObjet: {}", ex);
+            log.error("Error in archiveObjet: {}", ex.getMessage(), ex);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

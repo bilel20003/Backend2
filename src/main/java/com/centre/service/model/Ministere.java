@@ -25,4 +25,7 @@ public class Ministere implements Serializable {
     @JsonIgnore
     @OneToMany(mappedBy = "ministere", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Servicee> services;
+
+    @Column(nullable = false)
+    private boolean archiver = false;
 }

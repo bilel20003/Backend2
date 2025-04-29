@@ -13,5 +13,5 @@ public interface ObjetService {
 
     ResponseEntity<?> updateObjet(Long id, Objet objet);
 
-    ResponseEntity<?> deleteObjet(Long id);
+    ResponseEntity<?> archiveObjet(Long id);
 }

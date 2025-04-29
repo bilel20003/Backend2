@@ -16,6 +16,6 @@ public interface MinistereRest {
     @PutMapping("/updateMinistere/{id}")
     ResponseEntity<?> updateMinistere(@PathVariable Long id, @RequestBody Ministere ministere);
 
-    @DeleteMapping("/deleteMinistere/{id}")
-    ResponseEntity<?> deleteMinistere(@PathVariable Long id);
+    @PutMapping("/archiveMinistere/{id}")
+    ResponseEntity<?> archiveMinistere(@PathVariable Long id);
 }

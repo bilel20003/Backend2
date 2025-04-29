@@ -11,5 +11,5 @@ public interface MinistereService {
 
     ResponseEntity<?> updateMinistere(Long id, Ministere ministere);
 
-    ResponseEntity<?> deleteMinistere(Long id);
+    ResponseEntity<?> archiveMinistere(Long id);
 }

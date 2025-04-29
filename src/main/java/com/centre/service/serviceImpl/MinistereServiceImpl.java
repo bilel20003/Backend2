@@ -9,6 +9,7 @@ import com.centre.service.repository.MinistereRepository;
 import com.centre.service.service.MinistereService;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class MinistereServiceImpl implements MinistereService {
@@ -19,47 +20,77 @@ public class MinistereServiceImpl implements MinistereService {
     @Override
     public ResponseEntity<?> addNewMinistere(Ministere ministere) {
         try {
+            if (ministere.getNomMinistere() == null || ministere.getNomMinistere().trim().isEmpty()) {
+                return new ResponseEntity<>("{\"message\":\"Ministere name is required\"}", HttpStatus.BAD_REQUEST);
+            }
+            Optional<Ministere> existingMinistere = ministereRepository
+                    .findByNomMinistereAndArchiverFalse(ministere.getNomMinistere());
+            if (existingMinistere.isPresent()) {
+                return new ResponseEntity<>("{\"message\":\"Ministere name already exists\"}", HttpStatus.BAD_REQUEST);
+            }
+            ministere.setArchiver(false); // Ensure new ministeres are not archived
             ministereRepository.save(ministere);
             return new ResponseEntity<>("{\"message\":\"Ministere created successfully\"}", HttpStatus.CREATED);
         } catch (Exception e) {
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong: " + e.getMessage() + "\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public ResponseEntity<?> getAllMinisteres() {
         try {
-            List<Ministere> ministeres = ministereRepository.findAll();
+            List<Ministere> ministeres = ministereRepository.findByArchiverFalse();
             return new ResponseEntity<>(ministeres, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong: " + e.getMessage() + "\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public ResponseEntity<?> updateMinistere(Long id, Ministere ministere) {
         try {
-            if (!ministereRepository.existsById(id)) {
-                return new ResponseEntity<>("{\"message\":\"Ministere not found\"}", HttpStatus.NOT_FOUND);
+            Optional<Ministere> optionalMinistere = ministereRepository.findByIdAndArchiverFalse(id);
+            if (optionalMinistere.isEmpty()) {
+                return new ResponseEntity<>("{\"message\":\"Ministere not found or archived\"}", HttpStatus.NOT_FOUND);
             }
-            ministere.setId(id);
-            ministereRepository.save(ministere);
+            if (ministere.getNomMinistere() != null && !ministere.getNomMinistere().trim().isEmpty()) {
+                Optional<Ministere> existingMinistere = ministereRepository
+                        .findByNomMinistereAndArchiverFalse(ministere.getNomMinistere());
+                if (existingMinistere.isPresent() && !existingMinistere.get().getId().equals(id)) {
+                    return new ResponseEntity<>("{\"message\":\"Ministere name already exists\"}",
+                            HttpStatus.BAD_REQUEST);
+                }
+            }
+            Ministere existing = optionalMinistere.get();
+            if (ministere.getNomMinistere() != null && !ministere.getNomMinistere().trim().isEmpty()) {
+                existing.setNomMinistere(ministere.getNomMinistere());
+            }
+            existing.setArchiver(false); // Ensure updated ministeres are not archived
+            ministereRepository.save(existing);
             return new ResponseEntity<>("{\"message\":\"Ministere updated successfully\"}", HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong: " + e.getMessage() + "\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
-    public ResponseEntity<?> deleteMinistere(Long id) {
+    public ResponseEntity<?> archiveMinistere(Long id) {
         try {
-            if (!ministereRepository.existsById(id)) {
-                return new ResponseEntity<>("{\"message\":\"Ministere not found\"}", HttpStatus.NOT_FOUND);
+            Optional<Ministere> optionalMinistere = ministereRepository.findByIdAndArchiverFalse(id);
+            if (optionalMinistere.isEmpty()) {
+                return new ResponseEntity<>("{\"message\":\"Ministere not found or already archived\"}",
+                        HttpStatus.NOT_FOUND);
             }
-            ministereRepository.deleteById(id);
-            return new ResponseEntity<>("{\"message\":\"Ministere deleted successfully\"}", HttpStatus.OK);
+            Ministere ministere = optionalMinistere.get();
+            ministere.setArchiver(true);
+            ministereRepository.save(ministere);
+            return new ResponseEntity<>("{\"message\":\"Ministere archived successfully\"}", HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong: " + e.getMessage() + "\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

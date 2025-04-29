@@ -6,12 +6,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface ProduitRepository extends JpaRepository<Produit, Long> {
-    Optional<Produit> findByNom(String nom);
+    Optional<Produit> findByNomAndArchiverFalse(String nom);
 
-    @Query("SELECT COUNT(u) FROM UserInfo u WHERE u.produit.id = :produitId")
+    @Query("SELECT COUNT(u) FROM UserInfo u WHERE u.produit.id = :produitId AND u.archiver = false")
     long countUsersByProduitId(@Param("produitId") Long produitId);
+
+    Optional<Produit> findByIdAndArchiverFalse(Long id);
+
+    List<Produit> findByArchiverFalse();
 }

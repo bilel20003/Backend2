@@ -24,9 +24,9 @@ public class UserInfoRestImpl implements UserInfoRest {
         try {
             return userInfoService.addNewAppuser(userInfo);
         } catch (Exception ex) {
-            log.error("Error in addNewAppuser:{}", ex);
+            log.error("Error in addNewAppuser: {}", ex);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -34,9 +34,9 @@ public class UserInfoRestImpl implements UserInfoRest {
         try {
             return userInfoService.login(authRequest);
         } catch (Exception ex) {
-            log.error("Error in login:{}", ex);
+            log.error("Error in login: {}", ex);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -44,9 +44,9 @@ public class UserInfoRestImpl implements UserInfoRest {
         try {
             return userInfoService.getAllAppuser();
         } catch (Exception ex) {
-            log.error("Error in getAllAppuser:{}", ex);
+            log.error("Error in getAllAppuser: {}", ex);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -54,9 +54,9 @@ public class UserInfoRestImpl implements UserInfoRest {
         try {
             return userInfoService.getAllTechniciens();
         } catch (Exception ex) {
-            log.error("Error in getAllTechniciens:{}", ex);
+            log.error("Error in getAllTechniciens: {}", ex);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -70,11 +70,11 @@ public class UserInfoRestImpl implements UserInfoRest {
     }
 
     @Override
-    public ResponseEntity<?> deleteAppuser(Long id) {
+    public ResponseEntity<?> archiveAppuser(Long id) {
         try {
-            return userInfoService.deleteAppuser(id);
+            return userInfoService.archiveAppuser(id);
         } catch (Exception ex) {
-            log.error("Error in deleteAppuser: {}", ex);
+            log.error("Error in archiveAppuser: {}", ex);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

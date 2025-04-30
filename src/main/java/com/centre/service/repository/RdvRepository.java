@@ -21,4 +21,10 @@ public interface RdvRepository extends JpaRepository<Rdv, Long> {
 
     @Query("SELECT COUNT(r) FROM Rdv r WHERE r.client.id = :clientId AND r.status = 'EN_ATTENTE' AND r.archiver = false")
     long countPendingRdvsByClientId(@Param("clientId") Long clientId);
+
+    @Query("SELECT r FROM Rdv r WHERE r.client.id = :clientId AND r.archiver = false")
+    List<Rdv> findByClientIdAndArchiverFalse(@Param("clientId") Long clientId);
+
+    @Query("SELECT r FROM Rdv r WHERE r.technicien.id = :technicienId AND r.archiver = false")
+    List<Rdv> findByTechnicienIdAndArchiverFalse(@Param("technicienId") Long technicienId);
 }

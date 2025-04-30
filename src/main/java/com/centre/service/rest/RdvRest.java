@@ -24,4 +24,10 @@ public interface RdvRest {
 
     @PutMapping("/{id}/refuse")
     ResponseEntity<?> refuseRdv(@PathVariable Long id, @RequestParam Long guichetierId);
+
+    @GetMapping("/client/{clientId}")
+    ResponseEntity<?> getRdvsByClient(@PathVariable Long clientId);
+
+    @GetMapping("/technicien/{technicienId}")
+    ResponseEntity<?> getRdvsByTechnicien(@PathVariable Long technicienId);
 }

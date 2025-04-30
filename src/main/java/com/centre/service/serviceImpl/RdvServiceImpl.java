@@ -91,27 +91,36 @@ public class RdvServiceImpl implements RdvService {
                 return new ResponseEntity<>("{\"message\":\"Date souhaitée est requise\"}", HttpStatus.BAD_REQUEST);
             }
 
+            // Prevent same-day or past appointments
+            LocalDate today = LocalDate.now();
+            LocalDate rdvDate = rdv.getDateSouhaitee().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            if (!rdvDate.isAfter(today)) {
+                log.error("Appointment not allowed for today or past date {}", rdvDate);
+                return new ResponseEntity<>(
+                        "{\"message\":\"Les rendez-vous pour aujourd'hui ou dans le passé ne sont pas autorisés\"}",
+                        HttpStatus.BAD_REQUEST);
+            }
+
             // Check if the slot is available
-            LocalDate date = rdv.getDateSouhaitee().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             LocalTime time = rdv.getDateSouhaitee().toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
                     .truncatedTo(java.time.temporal.ChronoUnit.HOURS);
-            String dayOfWeek = date.getDayOfWeek().toString();
-            List<LocalTime> availableSlots = scheduleService.getAvailableSlots(dayOfWeek, date);
+            String dayOfWeek = rdvDate.getDayOfWeek().toString();
+            List<LocalTime> availableSlots = scheduleService.getAvailableSlots(dayOfWeek, rdvDate);
 
             if (!availableSlots.contains(time)) {
-                log.error("Selected time slot {} on {} is not available", time, date);
+                log.error("Selected time slot {} on {} is not available", time, rdvDate);
                 return new ResponseEntity<>("{\"message\":\"Le créneau horaire sélectionné n'est pas disponible\"}",
                         HttpStatus.BAD_REQUEST);
             }
 
             // Check for double-booking
-            java.sql.Timestamp startOfSlot = java.sql.Timestamp.valueOf(date.atTime(time));
-            java.sql.Timestamp endOfSlot = java.sql.Timestamp.valueOf(date.atTime(time.plusHours(1)));
+            java.sql.Timestamp startOfSlot = java.sql.Timestamp.valueOf(rdvDate.atTime(time));
+            java.sql.Timestamp endOfSlot = java.sql.Timestamp.valueOf(rdvDate.atTime(time.plusHours(1)));
             List<Rdv> existingRdvs = rdvRepository.findByArchiverFalse().stream()
                     .filter(r -> r.getDateSouhaitee().after(startOfSlot) && r.getDateSouhaitee().before(endOfSlot))
                     .collect(Collectors.toList());
             if (!existingRdvs.isEmpty()) {
-                log.error("Time slot {} on {} is already booked", time, date);
+                log.error("Time slot {} on {} is already booked", time, rdvDate);
                 return new ResponseEntity<>("{\"message\":\"Ce créneau est déjà réservé\"}", HttpStatus.CONFLICT);
             }
 
@@ -172,6 +181,52 @@ public class RdvServiceImpl implements RdvService {
     }
 
     @Override
+    public ResponseEntity<?> getRdvsByClient(Long clientId) {
+        try {
+            // Validate client
+            Optional<UserInfo> clientOpt = userInfoRepository.findByIdAndArchiverFalse(clientId);
+            if (clientOpt.isEmpty() || !clientOpt.get().getRole().getName().equals("CLIENT")) {
+                log.error("Client with ID {} not found, archived, or not a CLIENT", clientId);
+                return new ResponseEntity<>("{\"message\":\"Client non trouvé, archivé ou rôle incorrect\"}",
+                        HttpStatus.NOT_FOUND);
+            }
+
+            List<Rdv> rdvs = rdvRepository.findByClientIdAndArchiverFalse(clientId);
+            rdvs.forEach(this::updateRdvStatus);
+            log.info("Retrieved {} rendez-vous for client ID {}", rdvs.size(), clientId);
+            return new ResponseEntity<>(rdvs, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des rendez-vous pour client ID {} : {}", clientId, e.getMessage(),
+                    e);
+            return new ResponseEntity<>("{\"message\":\"Erreur lors de la récupération des rendez-vous\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> getRdvsByTechnicien(Long technicienId) {
+        try {
+            // Validate technician
+            Optional<UserInfo> technicienOpt = userInfoRepository.findByIdAndArchiverFalse(technicienId);
+            if (technicienOpt.isEmpty() || !technicienOpt.get().getRole().getName().equals("TECHNICIEN")) {
+                log.error("Technicien with ID {} not found, archived, or not a TECHNICIEN", technicienId);
+                return new ResponseEntity<>("{\"message\":\"Technicien non trouvé, archivé ou rôle incorrect\"}",
+                        HttpStatus.NOT_FOUND);
+            }
+
+            List<Rdv> rdvs = rdvRepository.findByTechnicienIdAndArchiverFalse(technicienId);
+            rdvs.forEach(this::updateRdvStatus);
+            log.info("Retrieved {} rendez-vous for technicien ID {}", rdvs.size(), technicienId);
+            return new ResponseEntity<>(rdvs, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des rendez-vous pour technicien ID {} : {}", technicienId,
+                    e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Erreur lors de la récupération des rendez-vous\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
     public ResponseEntity<?> updateRdv(Long id, Rdv updatedRdv) {
         try {
             Optional<Rdv> existingRdvOpt = rdvRepository.findByIdAndArchiverFalse(id);
@@ -213,6 +268,15 @@ public class RdvServiceImpl implements RdvService {
 
             // Update other fields
             if (updatedRdv.getDateSouhaitee() != null) {
+                LocalDate today = LocalDate.now();
+                LocalDate rdvDate = updatedRdv.getDateSouhaitee().toInstant().atZone(ZoneId.systemDefault())
+                        .toLocalDate();
+                if (!rdvDate.isAfter(today)) {
+                    log.error("Appointment not allowed for today or past date {}", rdvDate);
+                    return new ResponseEntity<>(
+                            "{\"message\":\"Les rendez-vous pour aujourd'hui ou dans le passé ne sont pas autorisés\"}",
+                            HttpStatus.BAD_REQUEST);
+                }
                 existingRdv.setDateSouhaitee(updatedRdv.getDateSouhaitee());
                 isUpdated = true;
             }

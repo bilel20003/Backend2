@@ -42,4 +42,14 @@ public class RdvRestImpl implements RdvRest {
     public ResponseEntity<?> refuseRdv(Long id, Long guichetierId) {
         return rdvService.refuseRdv(id, guichetierId);
     }
+
+    @Override
+    public ResponseEntity<?> getRdvsByClient(Long clientId) {
+        return rdvService.getRdvsByClient(clientId);
+    }
+
+    @Override
+    public ResponseEntity<?> getRdvsByTechnicien(Long technicienId) {
+        return rdvService.getRdvsByTechnicien(technicienId);
+    }
 }

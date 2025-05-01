@@ -357,12 +357,12 @@ public class RdvServiceImpl implements RdvService {
     }
 
     @Override
-    public ResponseEntity<?> refuseRdv(Long id, Long guichetierId) {
+    public ResponseEntity<?> refuseRdv(Long id, Long technicienId) {
         try {
-            Optional<UserInfo> guichetierOpt = userInfoRepository.findByIdAndArchiverFalse(guichetierId);
-            if (guichetierOpt.isEmpty() || !guichetierOpt.get().getRole().getName().equals("GUICHETIER")) {
-                log.error("Guichetier with ID {} not found, archived, or not a GUICHETIER", guichetierId);
-                return new ResponseEntity<>("{\"message\":\"Guichetier non trouvé, archivé ou rôle incorrect\"}",
+            Optional<UserInfo> technicienOpt = userInfoRepository.findByIdAndArchiverFalse(technicienId);
+            if (technicienOpt.isEmpty() || !technicienOpt.get().getRole().getName().equals("TECHNICIEN")) {
+                log.error("technicien with ID {} not found, archived, or not a technicien", technicienId);
+                return new ResponseEntity<>("{\"message\":\"technicien non trouvé, archivé ou rôle incorrect\"}",
                         HttpStatus.NOT_FOUND);
             }
 
@@ -376,7 +376,7 @@ public class RdvServiceImpl implements RdvService {
             Rdv rdv = rdvOpt.get();
             rdv.setStatus("REFUSE");
             rdvRepository.save(rdv);
-            log.info("Rendez-vous refusé avec succès pour l'ID: {} par guichetier: {}", id, guichetierId);
+            log.info("Rendez-vous refusé avec succès pour l'ID: {} par technicien: {}", id, technicienId);
             return new ResponseEntity<>("{\"message\":\"Rendez-vous refusé avec succès\"}", HttpStatus.OK);
         } catch (Exception e) {
             log.error("Erreur lors du refus du rendez-vous ID {} : {}", id, e.getMessage(), e);

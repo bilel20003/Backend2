@@ -5,11 +5,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import com.centre.service.model.AuthRequest;
 import com.centre.service.model.UserInfo;
 import com.centre.service.rest.UserInfoRest;
 import com.centre.service.service.UserInfoService;
+import java.util.Map;
 
 @RestController
 public class UserInfoRestImpl implements UserInfoRest {
@@ -20,6 +22,11 @@ public class UserInfoRestImpl implements UserInfoRest {
     UserInfoService userInfoService;
 
     @Override
+    public ResponseEntity<UserInfo> getAppuserById(@PathVariable Long id) {
+        return ResponseEntity.ok(userInfoService.getAppuserById(id));
+    }
+
+    @Override
     public ResponseEntity<?> addNewAppuser(UserInfo userInfo) {
         try {
             return userInfoService.addNewAppuser(userInfo);
@@ -27,6 +34,13 @@ public class UserInfoRestImpl implements UserInfoRest {
             log.error("Error in addNewAppuser: {}", ex);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public ResponseEntity<?> changePassword(Long id, Map<String, String> body) {
+        String newPassword = body.get("password");
+        userInfoService.changePassword(id, newPassword);
+        return ResponseEntity.ok(Map.of("message", "Mot de passe changé avec succès"));
     }
 
     @Override

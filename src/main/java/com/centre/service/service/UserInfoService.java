@@ -23,4 +23,9 @@ public interface UserInfoService {
     ResponseEntity<?> checkToken();
 
     ResponseEntity<?> toggleStatus(Long id);
+
+    void changePassword(Long id, String newPassword);
+
+    UserInfo getAppuserById(Long id);
+
 }

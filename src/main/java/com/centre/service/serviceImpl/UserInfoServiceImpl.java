@@ -17,6 +17,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -56,6 +57,25 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Autowired
     JwtAuthFilter jwtAuthFilter;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+    @Override
+    public void changePassword(Long id, String newPassword) {
+        UserInfo user = userInfoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        String encodedPassword = passwordEncoder.encode(newPassword);
+        user.setPassword(encodedPassword);
+        userInfoRepository.save(user);
+    }
+
+    @Override
+    public UserInfo getAppuserById(Long id) {
+        return userInfoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec l'id : " + id));
+    }
 
     @Override
     public ResponseEntity<?> addNewAppuser(UserInfo userInfo) {

@@ -22,15 +22,17 @@ public class Requete implements Serializable {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    private RequeteType type; // Utilisation de l'énumération pour le type de réclamation
+    private RequeteType type;
 
     private String description;
 
     @Enumerated(EnumType.STRING)
-    private EtatRequete etat; // Enum pour les états possibles
+    private EtatRequete etat;
 
     private String noteRetour;
-    private Date date; // Date de la requête
+    private Date date;
+
+    private Date dateTraitement; // Fixed typo: changed from dateTraitment
 
     @ManyToOne
     @JoinColumn(name = "objet_id", nullable = false)
@@ -38,15 +40,15 @@ public class Requete implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "client_id")
-    private UserInfo client; // Le client qui a créé la requête
+    private UserInfo client;
 
     @ManyToOne
     @JoinColumn(name = "guichetier_id")
-    private UserInfo guichetier; // Le guichetier qui traite la requête
+    private UserInfo guichetier;
 
     @ManyToOne
     @JoinColumn(name = "technicien_id")
-    private UserInfo technicien; // Le guichetier qui traite la requête
+    private UserInfo technicien;
 
     @Column(nullable = false)
     private boolean archiver = false;

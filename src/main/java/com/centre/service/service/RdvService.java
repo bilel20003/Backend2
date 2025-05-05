@@ -14,9 +14,10 @@ public interface RdvService {
 
     ResponseEntity<?> archiveRdv(Long id);
 
-    ResponseEntity<?> refuseRdv(Long id, Long guichetierId);
+    ResponseEntity<?> refuseRdv(Long id, Long technicienId, String noteRetour);
 
     ResponseEntity<?> getRdvsByClient(Long clientId);
 
     ResponseEntity<?> getRdvsByTechnicien(Long technicienId);
+
 }

@@ -38,7 +38,6 @@ public class RequeteServiceImpl implements RequeteService {
         try {
             log.info("Received request to add requete: {}", requete);
 
-            // Validate Objet
             if (requete.getObjet() == null || requete.getObjet().getId() == null) {
                 log.error("Objet is missing or has no ID");
                 return new ResponseEntity<>("{\"message\":\"Objet is required\"}", HttpStatus.BAD_REQUEST);
@@ -50,7 +49,6 @@ public class RequeteServiceImpl implements RequeteService {
             }
             requete.setObjet(objetOpt.get());
 
-            // Validate Client (if provided)
             if (requete.getClient() != null && requete.getClient().getId() != null) {
                 Optional<UserInfo> clientOpt = userInfoRepository.findByIdAndArchiverFalse(requete.getClient().getId());
                 if (clientOpt.isEmpty()) {
@@ -61,7 +59,6 @@ public class RequeteServiceImpl implements RequeteService {
                 requete.setClient(clientOpt.get());
             }
 
-            // Validate Guichetier (if provided)
             if (requete.getGuichetier() != null && requete.getGuichetier().getId() != null) {
                 Optional<UserInfo> guichetierOpt = userInfoRepository
                         .findByIdAndArchiverFalse(requete.getGuichetier().getId());
@@ -73,7 +70,6 @@ public class RequeteServiceImpl implements RequeteService {
                 requete.setGuichetier(guichetierOpt.get());
             }
 
-            // Validate Technicien (if provided)
             if (requete.getTechnicien() != null && requete.getTechnicien().getId() != null) {
                 Optional<UserInfo> technicienOpt = userInfoRepository
                         .findByIdAndArchiverFalse(requete.getTechnicien().getId());
@@ -85,14 +81,13 @@ public class RequeteServiceImpl implements RequeteService {
                 requete.setTechnicien(technicienOpt.get());
             }
 
-            // Set default values
             if (requete.getEtat() == null) {
                 requete.setEtat(EtatRequete.NOUVEAU);
             }
             if (requete.getDate() == null) {
                 requete.setDate(new Date());
             }
-            requete.setArchiver(false); // Ensure new requetes are not archived
+            requete.setArchiver(false);
 
             requeteRepository.save(requete);
             return new ResponseEntity<>("{\"message\":\"Requête ajoutée avec succès\"}", HttpStatus.CREATED);
@@ -180,7 +175,6 @@ public class RequeteServiceImpl implements RequeteService {
             Requete existingRequete = existingRequeteOpt.get();
             boolean isUpdated = false;
 
-            // Update Objet if provided
             if (updatedRequete.getObjet() != null && updatedRequete.getObjet().getId() != null) {
                 Optional<Objet> objetOpt = objetRepository.findByIdAndArchiverFalse(updatedRequete.getObjet().getId());
                 if (objetOpt.isEmpty()) {
@@ -192,7 +186,6 @@ public class RequeteServiceImpl implements RequeteService {
                 isUpdated = true;
             }
 
-            // Update Client if provided
             if (updatedRequete.getClient() != null && updatedRequete.getClient().getId() != null) {
                 Optional<UserInfo> clientOpt = userInfoRepository
                         .findByIdAndArchiverFalse(updatedRequete.getClient().getId());
@@ -205,7 +198,6 @@ public class RequeteServiceImpl implements RequeteService {
                 isUpdated = true;
             }
 
-            // Update Guichetier if provided
             if (updatedRequete.getGuichetier() != null && updatedRequete.getGuichetier().getId() != null) {
                 Optional<UserInfo> guichetierOpt = userInfoRepository
                         .findByIdAndArchiverFalse(updatedRequete.getGuichetier().getId());
@@ -218,7 +210,6 @@ public class RequeteServiceImpl implements RequeteService {
                 isUpdated = true;
             }
 
-            // Update Technicien if provided
             if (updatedRequete.getTechnicien() != null && updatedRequete.getTechnicien().getId() != null) {
                 Optional<UserInfo> technicienOpt = userInfoRepository
                         .findByIdAndArchiverFalse(updatedRequete.getTechnicien().getId());
@@ -231,7 +222,6 @@ public class RequeteServiceImpl implements RequeteService {
                 isUpdated = true;
             }
 
-            // Update other fields if provided
             if (updatedRequete.getType() != null) {
                 existingRequete.setType(updatedRequete.getType());
                 isUpdated = true;
@@ -257,13 +247,18 @@ public class RequeteServiceImpl implements RequeteService {
                 isUpdated = true;
             }
 
+            if (updatedRequete.getDateTraitement() != null) {
+                existingRequete.setDateTraitement(updatedRequete.getDateTraitement());
+                isUpdated = true;
+            }
+
             if (!isUpdated) {
                 log.warn("No valid fields provided for update of requete ID {}", id);
                 return new ResponseEntity<>("{\"message\":\"Aucun champ valide fourni pour la mise à jour\"}",
                         HttpStatus.BAD_REQUEST);
             }
 
-            existingRequete.setArchiver(false); // Ensure updated requetes are not archived
+            existingRequete.setArchiver(false);
             requeteRepository.save(existingRequete);
             return new ResponseEntity<>("{\"message\":\"Requête mise à jour avec succès\"}", HttpStatus.OK);
         } catch (Exception e) {

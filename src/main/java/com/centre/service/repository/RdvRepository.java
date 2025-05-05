@@ -27,4 +27,6 @@ public interface RdvRepository extends JpaRepository<Rdv, Long> {
 
     @Query("SELECT r FROM Rdv r WHERE r.technicien.id = :technicienId AND r.archiver = false")
     List<Rdv> findByTechnicienIdAndArchiverFalse(@Param("technicienId") Long technicienId);
+
+    Optional<Rdv> findByMeetLink(String meetLink);
 }

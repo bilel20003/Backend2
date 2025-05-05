@@ -28,6 +28,8 @@ public class Rdv implements Serializable {
 
     private String status;
 
+    private String noteRetour;
+
     private String typeProbleme;
 
     @Temporal(TemporalType.TIMESTAMP)
@@ -44,4 +46,7 @@ public class Rdv implements Serializable {
 
     @Column(nullable = false)
     private boolean archiver = false;
+
+    @Column
+    private String meetLink; // Nouveau champ pour stocker le lien Google Meet
 }

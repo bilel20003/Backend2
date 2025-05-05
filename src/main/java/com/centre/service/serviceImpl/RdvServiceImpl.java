@@ -50,17 +50,6 @@ public class RdvServiceImpl implements RdvService {
         return selectedTechnician;
     }
 
-    private void updateRdvStatus(Rdv rdv) {
-        if (rdv.getStatus() == null || !rdv.getStatus().equals("TERMINE")) {
-            Date now = new Date();
-            if (rdv.getDateSouhaitee() != null && rdv.getDateSouhaitee().before(now)) {
-                rdv.setStatus("TERMINE");
-                rdvRepository.save(rdv);
-                log.info("RDV ID {} status updated to TERMINE due to past date", rdv.getId());
-            }
-        }
-    }
-
     @Override
     public ResponseEntity<?> addRdv(Rdv rdv) {
         try {
@@ -152,7 +141,6 @@ public class RdvServiceImpl implements RdvService {
     public ResponseEntity<?> getAllRdvs() {
         try {
             List<Rdv> rdvs = rdvRepository.findByArchiverFalse();
-            rdvs.forEach(this::updateRdvStatus);
             return new ResponseEntity<>(rdvs, HttpStatus.OK);
         } catch (Exception e) {
             log.error("Erreur lors de la récupération des rendez-vous : {}", e.getMessage(), e);
@@ -171,7 +159,6 @@ public class RdvServiceImpl implements RdvService {
                         HttpStatus.NOT_FOUND);
             }
             Rdv rdv = rdvOpt.get();
-            updateRdvStatus(rdv);
             return new ResponseEntity<>(rdv, HttpStatus.OK);
         } catch (Exception e) {
             log.error("Erreur lors de la récupération du rendez-vous ID {} : {}", id, e.getMessage(), e);
@@ -192,7 +179,6 @@ public class RdvServiceImpl implements RdvService {
             }
 
             List<Rdv> rdvs = rdvRepository.findByClientIdAndArchiverFalse(clientId);
-            rdvs.forEach(this::updateRdvStatus);
             log.info("Retrieved {} rendez-vous for client ID {}", rdvs.size(), clientId);
             return new ResponseEntity<>(rdvs, HttpStatus.OK);
         } catch (Exception e) {
@@ -215,7 +201,6 @@ public class RdvServiceImpl implements RdvService {
             }
 
             List<Rdv> rdvs = rdvRepository.findByTechnicienIdAndArchiverFalse(technicienId);
-            rdvs.forEach(this::updateRdvStatus);
             log.info("Retrieved {} rendez-vous for technicien ID {}", rdvs.size(), technicienId);
             return new ResponseEntity<>(rdvs, HttpStatus.OK);
         } catch (Exception e) {
@@ -308,6 +293,11 @@ public class RdvServiceImpl implements RdvService {
                 isUpdated = true;
             }
 
+            if (updatedRdv.getNoteRetour() != null) {
+                existingRdv.setNoteRetour(updatedRdv.getNoteRetour());
+                isUpdated = true;
+            }
+
             if (updatedRdv.getTypeProbleme() != null && !updatedRdv.getTypeProbleme().trim().isEmpty()) {
                 existingRdv.setTypeProbleme(updatedRdv.getTypeProbleme());
                 isUpdated = true;
@@ -315,6 +305,27 @@ public class RdvServiceImpl implements RdvService {
 
             if (updatedRdv.getDateEnvoi() != null) {
                 existingRdv.setDateEnvoi(updatedRdv.getDateEnvoi());
+                isUpdated = true;
+            }
+
+            // Validate and update meetLink
+            if (updatedRdv.getMeetLink() != null && !updatedRdv.getMeetLink().trim().isEmpty()) {
+                String meetLink = updatedRdv.getMeetLink().trim();
+                // Validate meetLink format
+                if (!meetLink.matches("^https://meet\\.google\\.com/[a-z]{3}-[a-z]{4}-[a-z]{3}$")) {
+                    log.error("Invalid meetLink format for RDV ID {}: {}", id, meetLink);
+                    return new ResponseEntity<>("{\"message\":\"Format du lien Meet invalide\"}",
+                            HttpStatus.BAD_REQUEST);
+                }
+                // Check for uniqueness
+                Optional<Rdv> existingRdvWithLink = rdvRepository.findByMeetLink(meetLink);
+                if (existingRdvWithLink.isPresent() && !existingRdvWithLink.get().getId().equals(id)) {
+                    log.error("meetLink {} already used by another RDV ID {}", meetLink,
+                            existingRdvWithLink.get().getId());
+                    return new ResponseEntity<>("{\"message\":\"Lien Meet déjà utilisé par un autre rendez-vous\"}",
+                            HttpStatus.BAD_REQUEST);
+                }
+                existingRdv.setMeetLink(meetLink);
                 isUpdated = true;
             }
 
@@ -357,12 +368,12 @@ public class RdvServiceImpl implements RdvService {
     }
 
     @Override
-    public ResponseEntity<?> refuseRdv(Long id, Long technicienId) {
+    public ResponseEntity<?> refuseRdv(Long id, Long technicienId, String noteRetour) {
         try {
             Optional<UserInfo> technicienOpt = userInfoRepository.findByIdAndArchiverFalse(technicienId);
             if (technicienOpt.isEmpty() || !technicienOpt.get().getRole().getName().equals("TECHNICIEN")) {
-                log.error("technicien with ID {} not found, archived, or not a technicien", technicienId);
-                return new ResponseEntity<>("{\"message\":\"technicien non trouvé, archivé ou rôle incorrect\"}",
+                log.error("Technicien with ID {} not found, archived, or not a TECHNICIEN", technicienId);
+                return new ResponseEntity<>("{\"message\":\"Technicien non trouvé, archivé ou rôle incorrect\"}",
                         HttpStatus.NOT_FOUND);
             }
 
@@ -375,8 +386,11 @@ public class RdvServiceImpl implements RdvService {
 
             Rdv rdv = rdvOpt.get();
             rdv.setStatus("REFUSE");
+            rdv.setNoteRetour(noteRetour != null ? noteRetour.trim() : null); // Enregistrer noteRetour, peut être null
+
             rdvRepository.save(rdv);
-            log.info("Rendez-vous refusé avec succès pour l'ID: {} par technicien: {}", id, technicienId);
+            log.info("Rendez-vous refusé avec succès pour l'ID: {} par technicien: {} avec noteRetour: {}",
+                    id, technicienId, noteRetour);
             return new ResponseEntity<>("{\"message\":\"Rendez-vous refusé avec succès\"}", HttpStatus.OK);
         } catch (Exception e) {
             log.error("Erreur lors du refus du rendez-vous ID {} : {}", id, e.getMessage(), e);

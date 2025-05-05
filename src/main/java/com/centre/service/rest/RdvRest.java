@@ -23,11 +23,13 @@ public interface RdvRest {
     ResponseEntity<?> archiveRdv(@PathVariable Long id);
 
     @PutMapping("/{id}/refuse")
-    ResponseEntity<?> refuseRdv(@PathVariable Long id, @RequestParam Long guichetierId);
+    ResponseEntity<?> refuseRdv(@PathVariable Long id, @RequestParam Long technicienId,
+            @RequestParam String noteRetour);
 
     @GetMapping("/client/{clientId}")
     ResponseEntity<?> getRdvsByClient(@PathVariable Long clientId);
 
     @GetMapping("/technicien/{technicienId}")
     ResponseEntity<?> getRdvsByTechnicien(@PathVariable Long technicienId);
+
 }

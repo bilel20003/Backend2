@@ -17,9 +17,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.mail.MailSendException;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -471,19 +472,66 @@ public class UserInfoServiceImpl implements UserInfoService {
                 return new ResponseEntity<>("{\"message\":\"Failed to save reset token\"}",
                         HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            // Send email with reset link
+            // Send HTML email with a styled button
             String resetLink = "http://localhost:4200/reset-password?token=" + resetToken;
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(user.getEmail());
-            message.setSubject("Réinitialisation de votre mot de passe");
             String userName = StringUtils.hasText(user.getName()) ? user.getName() : "Utilisateur";
-            message.setText("Bonjour " + userName + ",\n\n" +
-                    "Cliquez sur le lien suivant pour réinitialiser votre mot de passe : " + resetLink + "\n" +
-                    "Ce lien est valide pendant 1 heure.\n\n" +
-                    "Cordialement,\nL'équipe CNI");
+            String htmlContent = "<!DOCTYPE html>" +
+                    "<html>" +
+                    "<head>" +
+                    "<meta charset='UTF-8'>" +
+                    "<meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
+                    "</head>" +
+                    "<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; line-height: 1.6; color: #333333; background-color: #f4f4f4;'>"
+                    +
+                    "<table width='100%' cellpadding='0' cellspacing='0' style='max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px;'>"
+                    +
+                    "<tr>" +
+                    "<td style='padding: 20px; text-align: center; background-color: #1e3c72; border-top-left-radius: 8px; border-top-right-radius: 8px;'>"
+                    +
+                    "<h1 style='color: #ffffff; margin: 0; font-size: 24px;'>Réinitialisation de mot de passe</h1>" +
+                    "</td>" +
+                    "</tr>" +
+                    "<tr>" +
+                    "<td style='padding: 30px;'>" +
+                    "<p style='font-size: 16px; margin: 0 0 20px;'>Bonjour " + userName + ",</p>" +
+                    "<p style='font-size: 16px; margin: 0 0 20px;'>Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le bouton ci-dessous pour procéder :</p>"
+                    +
+                    "<table width='100%' cellpadding='0' cellspacing='0'>" +
+                    "<tr>" +
+                    "<td style='text-align: center; padding: 20px 0;'>" +
+                    "<a href='" + resetLink +
+                    "' style='display: inline-block; padding: 12px 30px; background: linear-gradient(to bottom, #1e3c72, #1e3c72); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: background 0.3s;'>"
+                    +
+                    "Réinitialiser le mot de passe</a>" +
+                    "</td>" +
+                    "</tr>" +
+                    "</table>" +
+                    "<p style='font-size: 14px; color: #666666; margin: 20px 0 0;'>Ce lien est valide pendant 1 heure.</p>"
+                    +
+                    "<p style='font-size: 14px; color: #666666; margin: 5px 0 0;'>Si vous n'avez pas initié cette demande, veuillez ignorer cet email.</p>"
+                    +
+                    "</td>" +
+                    "</tr>" +
+                    "<tr>" +
+                    "<td style='padding: 20px; text-align: center; background-color: #f8f9fa; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;'>"
+                    +
+                    "<p style='font-size: 12px; color: #666666; margin: 0;'>Cordialement,<br>L'équipe CNI</p>" +
+                    "<p style='font-size: 12px; color: #666666; margin: 10px 0 0;'>Contactez-nous : <a href='mailto:support@cni.com' style='color: #1e3c72; text-decoration: none;'>support@cni.com</a></p>"
+                    +
+                    "</td>" +
+                    "</tr>" +
+                    "</table>" +
+                    "</body>" +
+                    "</html>";
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(user.getEmail());
+            helper.setSubject("Réinitialisation de votre mot de passe");
+            helper.setText(htmlContent, true); // true indicates HTML content
             try {
                 mailSender.send(message);
-                log.info("Password reset email sent successfully to: {}", email);
+                log.info("Password reset email with styled button sent successfully to: {}", email);
             } catch (MailSendException e) {
                 log.error("Failed to send password reset email to {}: {}", email, e.getMessage(), e);
                 return new ResponseEntity<>("{\"message\":\"Failed to send password reset email\"}",

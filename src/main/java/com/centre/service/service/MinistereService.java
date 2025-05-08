@@ -12,4 +12,8 @@ public interface MinistereService {
     ResponseEntity<?> updateMinistere(Long id, Ministere ministere);
 
     ResponseEntity<?> archiveMinistere(Long id);
+
+    ResponseEntity<?> getAllArchivedMinisteres();
+
+    ResponseEntity<?> unarchiveMinistere(Long id);
 }

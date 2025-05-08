@@ -39,4 +39,9 @@ public interface UserInfoRest {
     @PutMapping("/changePassword/{id}")
     ResponseEntity<?> changePassword(@PathVariable Long id, @RequestBody Map<String, String> body);
 
+    @PostMapping(path = "/forgot-password")
+    ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body);
+
+    @PostMapping(path = "/reset-password")
+    ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body);
 }

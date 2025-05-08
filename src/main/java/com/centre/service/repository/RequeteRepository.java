@@ -22,4 +22,8 @@ public interface RequeteRepository extends JpaRepository<Requete, Long> {
     Optional<Requete> findByIdAndArchiverFalse(Long id);
 
     List<Requete> findByArchiverFalse();
+
+    List<Requete> findByArchiverTrue();
+
+    Optional<Requete> findById(Long id);
 }

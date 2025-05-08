@@ -11,4 +11,8 @@ public interface MinistereRepository extends JpaRepository<Ministere, Long> {
     Optional<Ministere> findByIdAndArchiverFalse(Long id);
 
     List<Ministere> findByArchiverFalse();
+
+    List<Ministere> findByArchiverTrue();
+
+    Optional<Ministere> findById(Long id);
 }

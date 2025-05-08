@@ -1,4 +1,3 @@
-// src/main/java/com/centre/service/data/DataLoader.java
 package com.centre.service.data;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,6 +101,8 @@ public class DataLoader implements ApplicationRunner {
             admin.setService(adminService);
             admin.setProduit(anyProduit);
             admin.setArchiver(false);
+            admin.setResetToken(null);
+            admin.setResetTokenExpiry(null);
 
             userInfoRepository.save(admin);
         }

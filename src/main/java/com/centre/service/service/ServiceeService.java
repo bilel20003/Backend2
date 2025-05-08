@@ -12,4 +12,8 @@ public interface ServiceeService {
     ResponseEntity<?> updateService(Long id, Servicee service);
 
     ResponseEntity<?> archiveService(Long id);
+
+    ResponseEntity<?> getAllArchivedServices();
+
+    ResponseEntity<?> unarchiveService(Long id);
 }

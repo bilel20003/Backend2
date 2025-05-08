@@ -367,6 +367,44 @@ public class RdvServiceImpl implements RdvService {
         }
     }
 
+    public ResponseEntity<?> getAllArchivedRdvs() {
+        try {
+            List<Rdv> rdvs = rdvRepository.findByArchiverTrue();
+            return new ResponseEntity<>(rdvs, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Error retrieving archived RDVs: {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public ResponseEntity<?> unarchiveRdv(Long id) {
+        try {
+            Optional<Rdv> rdvOpt = rdvRepository.findById(id);
+            if (rdvOpt.isEmpty()) {
+                return new ResponseEntity<>("{\"message\":\"RDV not found\"}", HttpStatus.NOT_FOUND);
+            }
+            Rdv rdv = rdvOpt.get();
+            if (!rdv.isArchiver()) {
+                return new ResponseEntity<>("{\"message\":\"RDV is not archived\"}", HttpStatus.BAD_REQUEST);
+            }
+            // Check if related entities are not archived
+            if (rdv.getClient().isArchiver()) {
+                return new ResponseEntity<>("{\"message\":\"Cannot unarchive RDV: Client is archived\"}",
+                        HttpStatus.BAD_REQUEST);
+            }
+            if (rdv.getTechnicien().isArchiver()) {
+                return new ResponseEntity<>("{\"message\":\"Cannot unarchive RDV: Technician is archived\"}",
+                        HttpStatus.BAD_REQUEST);
+            }
+            rdv.setArchiver(false);
+            rdvRepository.save(rdv);
+            return new ResponseEntity<>("{\"message\":\"RDV unarchived successfully\"}", HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Error unarchiving RDV with ID {}: {}", id, e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @Override
     public ResponseEntity<?> refuseRdv(Long id, Long technicienId, String noteRetour) {
         try {

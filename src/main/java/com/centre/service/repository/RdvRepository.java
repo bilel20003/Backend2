@@ -29,4 +29,8 @@ public interface RdvRepository extends JpaRepository<Rdv, Long> {
     List<Rdv> findByTechnicienIdAndArchiverFalse(@Param("technicienId") Long technicienId);
 
     Optional<Rdv> findByMeetLink(String meetLink);
+
+    List<Rdv> findByArchiverTrue();
+
+    Optional<Rdv> findById(Long id);
 }

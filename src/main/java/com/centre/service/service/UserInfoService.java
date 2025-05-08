@@ -28,4 +28,11 @@ public interface UserInfoService {
 
     UserInfo getAppuserById(Long id);
 
+    ResponseEntity<?> getAllArchivedUsers();
+
+    ResponseEntity<?> unarchiveAppuser(Long id);
+
+    ResponseEntity<?> forgotPassword(String email);
+
+    ResponseEntity<?> resetPassword(String token, String newPassword);
 }

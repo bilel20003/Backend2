@@ -38,7 +38,9 @@ public class SecurityConfig {
                 .and()
                 .csrf().disable()
                 .authorizeHttpRequests()
-                .requestMatchers("/api/personnes/login", "/api/personnes/addNewAppuser").permitAll()
+                .requestMatchers("/api/personnes/login", "/api/personnes/forgot-password",
+                        "/api/personnes/reset-password", "/api/personnes/addNewAppuser")
+                .permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .exceptionHandling()

@@ -15,4 +15,8 @@ public interface ServiceeRepository extends JpaRepository<Servicee, Long> {
     List<Servicee> findAllWithMinistere();
 
     Optional<Servicee> findByIdAndArchiverFalse(Long id);
+
+    List<Servicee> findByArchiverTrue();
+
+    Optional<Servicee> findById(Long id);
 }

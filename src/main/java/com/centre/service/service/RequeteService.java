@@ -21,4 +21,8 @@ public interface RequeteService {
     ResponseEntity<?> updateRequete(Long id, Requete requete);
 
     ResponseEntity<?> archiveRequete(Long id);
+
+    ResponseEntity<?> getAllArchivedRequetes();
+
+    ResponseEntity<?> unarchiveRequete(Long id);
 }

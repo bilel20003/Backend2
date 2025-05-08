@@ -107,4 +107,27 @@ public class UserInfoRestImpl implements UserInfoRest {
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @Override
+    public ResponseEntity<?> forgotPassword(Map<String, String> body) {
+        try {
+            String email = body.get("email");
+            return userInfoService.forgotPassword(email);
+        } catch (Exception ex) {
+            log.error("Error in forgotPassword: {}", ex);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> resetPassword(Map<String, String> body) {
+        try {
+            String token = body.get("token");
+            String newPassword = body.get("password");
+            return userInfoService.resetPassword(token, newPassword);
+        } catch (Exception ex) {
+            log.error("Error in resetPassword: {}", ex);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

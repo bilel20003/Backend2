@@ -18,4 +18,8 @@ public interface ObjetRepository extends JpaRepository<Objet, Long> {
 
     @Query("SELECT COUNT(r) FROM Requete r WHERE r.objet.id = :objetId AND r.archiver = false")
     long countRequetesByObjetId(@Param("objetId") Long objetId);
+
+    List<Objet> findByArchiverTrue();
+
+    Optional<Objet> findById(Long id);
 }

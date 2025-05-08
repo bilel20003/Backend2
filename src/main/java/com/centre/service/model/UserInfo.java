@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_info")
@@ -41,6 +42,12 @@ public class UserInfo implements Serializable {
 
     @Column(nullable = false)
     private boolean archiver = false;
+
+    @Column
+    private String resetToken;
+
+    @Column
+    private LocalDateTime resetTokenExpiry;
 
     // Constructeur pour UserInfo
     public UserInfo(Long id, String name, String email, String status, Role role, Servicee service) {

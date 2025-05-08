@@ -20,4 +20,7 @@ public interface RdvService {
 
     ResponseEntity<?> getRdvsByTechnicien(Long technicienId);
 
+    ResponseEntity<?> getAllArchivedRdvs();
+
+    ResponseEntity<?> unarchiveRdv(Long id);
 }

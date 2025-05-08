@@ -34,4 +34,10 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Long> {
 
     @Query("SELECT u FROM UserInfo u WHERE u.role.name = :roleName AND u.archiver = false")
     List<UserInfo> findByRoleNameAndArchiverFalse(@Param("roleName") String roleName);
+
+    List<UserInfo> findByArchiverTrue();
+
+    Optional<UserInfo> findById(Long id);
+
+    Optional<UserInfo> findByResetToken(String resetToken);
 }

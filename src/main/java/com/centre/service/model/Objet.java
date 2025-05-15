@@ -23,8 +23,12 @@ public class Objet implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "produit_id", nullable = false)
-    private Produit produit; // Relation avec le produit
+    private Produit produit; // Relation with product
 
     @Column(nullable = false)
     private boolean archiver = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ObjetType type; // New field to define object type
 }

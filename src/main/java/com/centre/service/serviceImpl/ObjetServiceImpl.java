@@ -1,7 +1,10 @@
 package com.centre.service.serviceImpl;
 
 import com.centre.service.model.Objet;
+import com.centre.service.model.ObjetType;
+import com.centre.service.model.Requete;
 import com.centre.service.repository.ObjetRepository;
+import com.centre.service.repository.RequeteRepository;
 import com.centre.service.service.ObjetService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +24,9 @@ public class ObjetServiceImpl implements ObjetService {
 
     @Autowired
     private ObjetRepository objetRepository;
+
+    @Autowired
+    private RequeteRepository requeteRepository;
 
     @Override
     public ResponseEntity<?> getAllObjets() {
@@ -54,6 +61,14 @@ public class ObjetServiceImpl implements ObjetService {
                 log.error("Object name is required");
                 return new ResponseEntity<>("{\"message\":\"Object name is required\"}", HttpStatus.BAD_REQUEST);
             }
+            if (objet.getProduit() == null || objet.getProduit().getId() == null) {
+                log.error("Product is required");
+                return new ResponseEntity<>("{\"message\":\"Product is required\"}", HttpStatus.BAD_REQUEST);
+            }
+            if (objet.getType() == null) {
+                log.error("Object type is required");
+                return new ResponseEntity<>("{\"message\":\"Object type is required\"}", HttpStatus.BAD_REQUEST);
+            }
             objet.setArchiver(false);
             Objet savedObjet = objetRepository.save(objet);
             return new ResponseEntity<>(savedObjet, HttpStatus.CREATED);
@@ -78,6 +93,12 @@ public class ObjetServiceImpl implements ObjetService {
                 log.error("Object name is required for update");
                 return new ResponseEntity<>("{\"message\":\"Object name is required\"}", HttpStatus.BAD_REQUEST);
             }
+            if (objet.getProduit() != null && objet.getProduit().getId() != null) {
+                currentObjet.setProduit(objet.getProduit());
+            }
+            if (objet.getType() != null) {
+                currentObjet.setType(objet.getType());
+            }
             currentObjet.setArchiver(false);
             Objet updatedObjet = objetRepository.save(currentObjet);
             return new ResponseEntity<>(updatedObjet, HttpStatus.OK);
@@ -88,6 +109,7 @@ public class ObjetServiceImpl implements ObjetService {
     }
 
     @Override
+    @Transactional
     public ResponseEntity<?> archiveObjet(Long id) {
         try {
             Optional<Objet> objetOpt = objetRepository.findByIdAndArchiverFalse(id);
@@ -97,23 +119,27 @@ public class ObjetServiceImpl implements ObjetService {
                         HttpStatus.NOT_FOUND);
             }
             Objet objet = objetOpt.get();
-            long requeteCount = objetRepository.countRequetesByObjetId(id);
-            if (requeteCount > 0) {
-                log.error("Cannot archive object with ID {} as it is associated with {} non-archived requetes", id,
-                        requeteCount);
-                return new ResponseEntity<>(
-                        "{\"message\":\"Cannot archive object as it is associated with non-archived requetes\"}",
-                        HttpStatus.BAD_REQUEST);
+
+            // Archive related Requete entities
+            List<Requete> requetes = requeteRepository.findByObjetIdAndArchiverFalse(id);
+            for (Requete requete : requetes) {
+                requete.setArchiver(true);
+                requeteRepository.save(requete);
             }
+
+            // Archive the Objet
             objet.setArchiver(true);
             objetRepository.save(objet);
-            return new ResponseEntity<>("{\"message\":\"Object archived successfully\"}", HttpStatus.OK);
+
+            return new ResponseEntity<>("{\"message\":\"Object and related requetes archived successfully\"}",
+                    HttpStatus.OK);
         } catch (Exception e) {
             log.error("Error while archiving object: {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
+    @Override
     public ResponseEntity<?> getAllArchivedObjets() {
         try {
             List<Objet> objets = objetRepository.findByArchiverTrue();
@@ -124,6 +150,7 @@ public class ObjetServiceImpl implements ObjetService {
         }
     }
 
+    @Override
     public ResponseEntity<?> unarchiveObjet(Long id) {
         try {
             Optional<Objet> objetOpt = objetRepository.findById(id);
@@ -134,7 +161,6 @@ public class ObjetServiceImpl implements ObjetService {
             if (!objet.isArchiver()) {
                 return new ResponseEntity<>("{\"message\":\"Object is not archived\"}", HttpStatus.BAD_REQUEST);
             }
-            // Check if produit is not archived
             if (objet.getProduit().isArchiver()) {
                 return new ResponseEntity<>("{\"message\":\"Cannot unarchive object: Produit is archived\"}",
                         HttpStatus.BAD_REQUEST);
@@ -144,6 +170,28 @@ public class ObjetServiceImpl implements ObjetService {
             return new ResponseEntity<>("{\"message\":\"Object unarchived successfully\"}", HttpStatus.OK);
         } catch (Exception e) {
             log.error("Error while unarchiving object: {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> getObjetsByProduitIdAndType(Long produitId, ObjetType type) {
+        try {
+            List<Objet> objets = objetRepository.findByProduitIdAndArchiverFalseAndType(produitId, type);
+            return new ResponseEntity<>(objets, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Error while retrieving objects by product ID and type: {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> getObjetsByProduitId(Long produitId) {
+        try {
+            List<Objet> objets = objetRepository.findByProduitIdAndArchiverFalse(produitId);
+            return new ResponseEntity<>(objets, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Error while retrieving objects by product ID: {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

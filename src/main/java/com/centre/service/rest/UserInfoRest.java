@@ -44,4 +44,8 @@ public interface UserInfoRest {
 
     @PostMapping(path = "/reset-password")
     ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body);
+
+    @PostMapping("/welcome-email")
+    ResponseEntity<?> sendWelcomeEmail(@RequestBody Map<String, String> request);
+
 }

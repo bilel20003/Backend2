@@ -43,103 +43,150 @@ public class ProduitServiceImpl implements ProduitService {
 
     @Override
     public ResponseEntity<?> getAllProduits() {
+        log.info("Récupération de tous les produits non archivés");
         try {
             List<Produit> produits = produitRepository.findByArchiverFalse();
+            if (produits.isEmpty()) {
+                log.info("Aucun produit non archivé trouvé");
+                return new ResponseEntity<>("{\"message\":\"Aucun produit non archivé trouvé\"}", HttpStatus.OK);
+            }
             return new ResponseEntity<>(produits, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error while retrieving all products: {}", e.getMessage(), e);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur lors de la récupération de tous les produits : {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public ResponseEntity<?> getProduitById(Long id) {
+        log.info("Récupération du produit avec l'ID : {}", id);
         try {
             Optional<Produit> produit = produitRepository.findByIdAndArchiverFalse(id);
             if (produit.isPresent()) {
                 return new ResponseEntity<>(produit.get(), HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("{\"message\":\"Product not found or archived\"}", HttpStatus.NOT_FOUND);
+                log.warn("Produit non trouvé ou archivé avec l'ID : {}", id);
+                return new ResponseEntity<>("{\"message\":\"Produit non trouvé ou archivé\"}", HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
-            log.error("Error while retrieving product by ID: {}", e.getMessage(), e);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur lors de la récupération du produit par ID : {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public ResponseEntity<?> createProduit(Produit produit) {
+        log.info("Création d'un nouveau produit : {}", produit.getNom());
         try {
+            if (produit == null) {
+                log.warn("Aucune donnée de produit fournie pour la création");
+                return new ResponseEntity<>("{\"message\":\"Aucune donnée de produit fournie\"}",
+                        HttpStatus.BAD_REQUEST);
+            }
             if (produit.getNom() == null || produit.getNom().trim().isEmpty()) {
-                return new ResponseEntity<>("{\"message\":\"Product name is required\"}", HttpStatus.BAD_REQUEST);
+                log.warn("Le nom du produit est requis");
+                return new ResponseEntity<>("{\"message\":\"Le nom du produit est requis\"}", HttpStatus.BAD_REQUEST);
             }
             if (produit.getPrix() != null && produit.getPrix() < 0) {
-                return new ResponseEntity<>("{\"message\":\"Price cannot be negative\"}", HttpStatus.BAD_REQUEST);
+                log.warn("Le prix ne peut pas être négatif : {}", produit.getPrix());
+                return new ResponseEntity<>("{\"message\":\"Le prix ne peut pas être négatif\"}",
+                        HttpStatus.BAD_REQUEST);
             }
             Optional<Produit> existingProduit = produitRepository.findByNomAndArchiverFalse(produit.getNom());
             if (existingProduit.isPresent()) {
-                return new ResponseEntity<>("{\"message\":\"Product name already exists\"}", HttpStatus.BAD_REQUEST);
+                log.warn("Le nom du produit existe déjà : {}", produit.getNom());
+                return new ResponseEntity<>("{\"message\":\"Le nom du produit existe déjà\"}", HttpStatus.BAD_REQUEST);
             }
             produit.setArchiver(false);
             Produit savedProduit = produitRepository.save(produit);
+            log.info("Produit créé avec succès avec l'ID : {}", savedProduit.getId());
             return new ResponseEntity<>(savedProduit, HttpStatus.CREATED);
         } catch (Exception e) {
-            log.error("Error while creating product: {}", e.getMessage(), e);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur lors de la création du produit : {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public ResponseEntity<?> updateProduit(Long id, Produit produit) {
+        log.info("Mise à jour du produit avec l'ID : {}", id);
         try {
             Optional<Produit> optionalProduit = produitRepository.findByIdAndArchiverFalse(id);
             if (optionalProduit.isEmpty()) {
-                return new ResponseEntity<>("{\"message\":\"Product not found or archived\"}", HttpStatus.NOT_FOUND);
+                log.warn("Produit non trouvé ou archivé avec l'ID : {}", id);
+                return new ResponseEntity<>("{\"message\":\"Produit non trouvé ou archivé\"}", HttpStatus.NOT_FOUND);
+            }
+            if (produit == null) {
+                log.warn("Aucune donnée de produit fournie pour la mise à jour de l'ID : {}", id);
+                return new ResponseEntity<>("{\"message\":\"Aucune donnée de produit fournie pour la mise à jour\"}",
+                        HttpStatus.BAD_REQUEST);
             }
             if (produit.getNom() != null && !produit.getNom().trim().isEmpty()) {
                 Optional<Produit> existingProduit = produitRepository.findByNomAndArchiverFalse(produit.getNom());
                 if (existingProduit.isPresent() && !existingProduit.get().getId().equals(id)) {
-                    return new ResponseEntity<>("{\"message\":\"Product name already exists\"}",
+                    log.warn("Le nom du produit existe déjà : {}", produit.getNom());
+                    return new ResponseEntity<>("{\"message\":\"Le nom du produit existe déjà\"}",
                             HttpStatus.BAD_REQUEST);
                 }
             }
             Produit existing = optionalProduit.get();
+            boolean isUpdated = false;
             if (produit.getNom() != null && !produit.getNom().trim().isEmpty()) {
                 existing.setNom(produit.getNom());
+                isUpdated = true;
             }
             if (produit.getDescription() != null) {
                 existing.setDescription(produit.getDescription());
+                isUpdated = true;
             }
             if (produit.getTopologie() != null) {
                 existing.setTopologie(produit.getTopologie());
+                isUpdated = true;
             }
             if (produit.getPrix() != null) {
                 if (produit.getPrix() < 0) {
-                    return new ResponseEntity<>("{\"message\":\"Price cannot be negative\"}", HttpStatus.BAD_REQUEST);
+                    log.warn("Le prix ne peut pas être négatif : {}", produit.getPrix());
+                    return new ResponseEntity<>("{\"message\":\"Le prix ne peut pas être négatif\"}",
+                            HttpStatus.BAD_REQUEST);
                 }
                 existing.setPrix(produit.getPrix());
+                isUpdated = true;
+            }
+            if (!isUpdated) {
+                log.warn("Aucun champ valide fourni pour la mise à jour du produit avec l'ID : {}", id);
+                return new ResponseEntity<>("{\"message\":\"Aucun champ valide fourni pour la mise à jour\"}",
+                        HttpStatus.BAD_REQUEST);
             }
             existing.setArchiver(false);
             Produit updatedProduit = produitRepository.save(existing);
+            log.info("Produit mis à jour avec succès avec l'ID : {}", updatedProduit.getId());
             return new ResponseEntity<>(updatedProduit, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error while updating product: {}", e.getMessage(), e);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur lors de la mise à jour du produit : {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public ResponseEntity<?> archiveProduit(Long id) {
+        log.info("Archivage du produit avec l'ID : {}", id);
         try {
             Optional<Produit> optionalProduit = produitRepository.findByIdAndArchiverFalse(id);
             if (optionalProduit.isEmpty()) {
-                return new ResponseEntity<>("{\"message\":\"Product not found or already archived\"}",
+                log.warn("Produit non trouvé ou déjà archivé avec l'ID : {}", id);
+                return new ResponseEntity<>("{\"message\":\"Produit non trouvé ou déjà archivé\"}",
                         HttpStatus.NOT_FOUND);
             }
             Produit produit = optionalProduit.get();
             if ("Any".equalsIgnoreCase(produit.getNom()) && userInfoRepository.countNonClientUsersByProduitId(id) > 0) {
+                log.warn(
+                        "Impossible d'archiver le produit 'Any' car il est associé à des utilisateurs non archivés et non clients");
                 return new ResponseEntity<>(
-                        "{\"message\":\"Cannot archive 'Any' product as it is associated with non-archived non-client users\"}",
+                        "{\"message\":\"Impossible d'archiver le produit 'Any' car il est associé à des utilisateurs non archivés et non clients\"}",
                         HttpStatus.BAD_REQUEST);
             }
             produit.setArchiver(true);
@@ -177,44 +224,58 @@ public class ProduitServiceImpl implements ProduitService {
                     objet.setArchiver(true);
                     objetRepository.save(objet);
                 } else {
-                    log.warn("Cannot archive objet with ID {} due to non-archived requetes", objet.getId());
+                    log.warn("Impossible d'archiver l'objet avec l'ID {} en raison de requêtes non archivées",
+                            objet.getId());
                 }
             }
 
-            return new ResponseEntity<>("{\"message\":\"Product and related entities archived successfully\"}",
+            log.info("Produit et entités associées archivés avec succès avec l'ID : {}", id);
+            return new ResponseEntity<>("{\"message\":\"Produit et entités associées archivés avec succès\"}",
                     HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error while archiving product: {}", e.getMessage(), e);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur lors de l'archivage du produit : {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     public ResponseEntity<?> getAllArchivedProduits() {
+        log.info("Récupération de tous les produits archivés");
         try {
             List<Produit> produits = produitRepository.findByArchiverTrue();
+            if (produits.isEmpty()) {
+                log.info("Aucun produit archivé trouvé");
+                return new ResponseEntity<>("{\"message\":\"Aucun produit archivé trouvé\"}", HttpStatus.OK);
+            }
             return new ResponseEntity<>(produits, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error while retrieving archived products: {}", e.getMessage(), e);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur lors de la récupération des produits archivés : {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     public ResponseEntity<?> unarchiveProduit(Long id) {
+        log.info("Désarchivage du produit avec l'ID : {}", id);
         try {
             Optional<Produit> optionalProduit = produitRepository.findById(id);
             if (optionalProduit.isEmpty()) {
-                return new ResponseEntity<>("{\"message\":\"Product not found\"}", HttpStatus.NOT_FOUND);
+                log.warn("Produit non trouvé avec l'ID : {}", id);
+                return new ResponseEntity<>("{\"message\":\"Produit non trouvé\"}", HttpStatus.NOT_FOUND);
             }
             Produit produit = optionalProduit.get();
             if (!produit.isArchiver()) {
-                return new ResponseEntity<>("{\"message\":\"Product is not archived\"}", HttpStatus.BAD_REQUEST);
+                log.warn("Le produit n'est pas archivé avec l'ID : {}", id);
+                return new ResponseEntity<>("{\"message\":\"Le produit n'est pas archivé\"}", HttpStatus.BAD_REQUEST);
             }
             produit.setArchiver(false);
             produitRepository.save(produit);
-            return new ResponseEntity<>("{\"message\":\"Product unarchived successfully\"}", HttpStatus.OK);
+            log.info("Produit désarchivé avec succès avec l'ID : {}", id);
+            return new ResponseEntity<>("{\"message\":\"Produit désarchivé avec succès\"}", HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error while unarchiving product: {}", e.getMessage(), e);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur lors du désarchivage du produit : {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

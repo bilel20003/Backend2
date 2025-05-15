@@ -29,17 +29,17 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return new UserInfoService(); // Assurez-vous que cela ne crée pas de boucle
+        return new UserInfoService();
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.cors() // Assurez-vous que CORS est configuré ici
+        http.cors()
                 .and()
                 .csrf().disable()
                 .authorizeHttpRequests()
                 .requestMatchers("/api/personnes/login", "/api/personnes/forgot-password",
-                        "/api/personnes/reset-password", "/api/personnes/addNewAppuser")
+                        "/api/personnes/reset-password", "/api/personnes/addNewAppuser", "/api/personnes/welcome-email")
                 .permitAll()
                 .anyRequest().authenticated()
                 .and()

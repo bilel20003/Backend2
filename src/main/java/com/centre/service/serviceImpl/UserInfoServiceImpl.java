@@ -82,81 +82,86 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Override
     public void changePassword(Long id, String newPassword) {
-        log.info("Changing password for user ID: {}", id);
+        log.info("Changement de mot de passe pour l'utilisateur avec l'ID : {}", id);
         UserInfo user = userInfoRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("User not found with ID: {}", id);
-                    return new RuntimeException("Utilisateur non trouvé");
+                    log.error("Utilisateur non trouvé avec l'ID : {}", id);
+                    return new RuntimeException("Utilisateur non trouvé avec l'ID : " + id);
                 });
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            log.error("Le nouveau mot de passe est vide pour l'utilisateur avec l'ID : {}", id);
+            throw new RuntimeException("Le nouveau mot de passe ne peut pas être vide.");
+        }
         String encodedPassword = passwordEncoder.encode(newPassword);
         user.setPassword(encodedPassword);
         userInfoRepository.save(user);
-        log.info("Password changed successfully for user ID: {}", id);
+        log.info("Mot de passe changé avec succès pour l'utilisateur avec l'ID : {}", id);
     }
 
     @Override
     public UserInfo getAppuserById(Long id) {
-        log.info("Fetching user by ID: {}", id);
+        log.info("Récupération de l'utilisateur avec l'ID : {}", id);
         return userInfoRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("User not found with ID: {}", id);
-                    return new RuntimeException("Utilisateur non trouvé avec l'id : " + id);
+                    log.error("Utilisateur non trouvé avec l'ID : {}", id);
+                    return new RuntimeException("Utilisateur non trouvé avec l'ID : " + id);
                 });
     }
 
     @Override
     public ResponseEntity<?> addNewAppuser(UserInfo userInfo) {
-        log.info("Adding new user with email: {}", userInfo.getEmail());
+        log.info("Ajout d'un nouvel utilisateur avec l'email : {}", userInfo.getEmail());
         try {
             if (!ValidateUserInfo(userInfo)) {
-                log.warn("Invalid user data provided");
-                return new ResponseEntity<>("{\"message\":\"Missing required Data\"}", HttpStatus.BAD_REQUEST);
+                log.warn("Données utilisateur invalides fournies");
+                return new ResponseEntity<>("{\"message\":\"Données requises manquantes\"}", HttpStatus.BAD_REQUEST);
             }
             Optional<UserInfo> db = userInfoRepository.findByEmailAndArchiverFalse(userInfo.getEmail());
             if (db.isPresent()) {
-                log.warn("Email already exists: {}", userInfo.getEmail());
-                return new ResponseEntity<>("{\"message\":\"Email already exists\"}", HttpStatus.BAD_REQUEST);
+                log.warn("L'email existe déjà : {}", userInfo.getEmail());
+                return new ResponseEntity<>("{\"message\":\"Cet email existe déjà\"}", HttpStatus.BAD_REQUEST);
             }
             if (userInfo.getRole() == null || userInfo.getRole().getId() == null) {
-                log.warn("Role not provided");
-                return new ResponseEntity<>("{\"message\":\"Role must be provided\"}", HttpStatus.BAD_REQUEST);
+                log.warn("Rôle non fourni");
+                return new ResponseEntity<>("{\"message\":\"Le rôle doit être fourni\"}", HttpStatus.BAD_REQUEST);
             }
             Optional<Role> roleOpt = roleRepository.findById(userInfo.getRole().getId());
             if (roleOpt.isEmpty()) {
-                log.warn("Role not found with ID: {}", userInfo.getRole().getId());
-                return new ResponseEntity<>("{\"message\":\"Role not found\"}", HttpStatus.BAD_REQUEST);
+                log.warn("Rôle non trouvé avec l'ID : {}", userInfo.getRole().getId());
+                return new ResponseEntity<>("{\"message\":\"Rôle non trouvé\"}", HttpStatus.BAD_REQUEST);
             }
             userInfo.setRole(roleOpt.get());
             boolean isClient = "CLIENT".equalsIgnoreCase(roleOpt.get().getName());
             if (isClient) {
                 if (userInfo.getProduit() == null || userInfo.getProduit().getId() == null) {
-                    log.warn("Produit not provided for CLIENT role");
-                    return new ResponseEntity<>("{\"message\":\"Produit must be provided for CLIENT role\"}",
+                    log.warn("Produit non fourni pour le rôle CLIENT");
+                    return new ResponseEntity<>("{\"message\":\"Le produit doit être fourni pour le rôle CLIENT\"}",
                             HttpStatus.BAD_REQUEST);
                 }
                 Optional<Produit> produitOpt = produitRepository.findById(userInfo.getProduit().getId());
                 if (produitOpt.isEmpty()) {
-                    log.warn("Produit not found with ID: {}", userInfo.getProduit().getId());
-                    return new ResponseEntity<>("{\"message\":\"Produit not found\"}", HttpStatus.BAD_REQUEST);
+                    log.warn("Produit non trouvé avec l'ID : {}", userInfo.getProduit().getId());
+                    return new ResponseEntity<>("{\"message\":\"Produit non trouvé\"}", HttpStatus.BAD_REQUEST);
                 }
                 if ("Any".equalsIgnoreCase(produitOpt.get().getNom())) {
-                    log.warn("Cannot assign 'Any' product to CLIENT role");
-                    return new ResponseEntity<>("{\"message\":\"Cannot assign 'Any' product to CLIENT role\"}",
+                    log.warn("Impossible d'attribuer le produit 'Any' au rôle CLIENT");
+                    return new ResponseEntity<>(
+                            "{\"message\":\"Impossible d'attribuer le produit 'Any' au rôle CLIENT\"}",
                             HttpStatus.BAD_REQUEST);
                 }
                 userInfo.setProduit(produitOpt.get());
             } else {
                 Optional<Produit> anyProduitOpt = produitRepository.findByNomAndArchiverFalse("Any");
                 if (anyProduitOpt.isEmpty()) {
-                    log.error("Default 'Any' product not found");
-                    return new ResponseEntity<>("{\"message\":\"Default 'Any' product not found\"}",
+                    log.error("Produit par défaut 'Any' non trouvé");
+                    return new ResponseEntity<>("{\"message\":\"Produit par défaut 'Any' non trouvé\"}",
                             HttpStatus.INTERNAL_SERVER_ERROR);
                 }
                 userInfo.setProduit(anyProduitOpt.get());
             }
             if (userInfo.getService() == null || userInfo.getService().getId() == null) {
-                log.warn("Service not provided");
-                return new ResponseEntity<>("{\"message\":\"Service must be provided\"}", HttpStatus.BAD_REQUEST);
+                log.warn("Service non fourni");
+                return new ResponseEntity<>("{\"message\":\"Le service doit être fourni\"}", HttpStatus.BAD_REQUEST);
             }
             userInfo.setPassword(encoder.encode(userInfo.getPassword()));
             userInfo.setStatus("false");
@@ -164,11 +169,12 @@ public class UserInfoServiceImpl implements UserInfoService {
             userInfo.setIsDeletable("true");
             userInfo.setArchiver(false);
             userInfoRepository.save(userInfo);
-            log.info("User created successfully with email: {}", userInfo.getEmail());
-            return new ResponseEntity<>("{\"message\":\"User created successfully\"}", HttpStatus.CREATED);
+            log.info("Utilisateur créé avec succès avec l'email : {}", userInfo.getEmail());
+            return new ResponseEntity<>("{\"message\":\"Utilisateur créé avec succès\"}", HttpStatus.CREATED);
         } catch (Exception e) {
-            log.error("Error while adding new user: {}", e.getMessage(), e);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur lors de l'ajout d'un nouvel utilisateur : {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -180,7 +186,7 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Override
     public ResponseEntity<?> login(AuthRequest authRequest) {
-        log.info("Login attempt for email: {}", authRequest.getEmail());
+        log.info("Tentative de connexion pour l'email : {}", authRequest.getEmail());
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -194,65 +200,80 @@ public class UserInfoServiceImpl implements UserInfoService {
                     response.put("token", token);
                     return new ResponseEntity<>(response, HttpStatus.OK);
                 } else {
-                    log.warn("User {} is not approved", authRequest.getEmail());
-                    return new ResponseEntity<>("{\"message\":\"Wait for admin approval\"}", HttpStatus.BAD_REQUEST);
+                    log.warn("L'utilisateur {} n'est pas approuvé", authRequest.getEmail());
+                    return new ResponseEntity<>("{\"message\":\"En attente de l'approbation de l'administrateur\"}",
+                            HttpStatus.BAD_REQUEST);
                 }
             } else {
-                log.error("Invalid user request for email: {}", authRequest.getEmail());
-                throw new UsernameNotFoundException("Invalid user request");
+                log.error("Demande d'utilisateur invalide pour l'email : {}", authRequest.getEmail());
+                throw new UsernameNotFoundException("Demande d'utilisateur invalide");
             }
         } catch (DisabledException ex) {
-            log.warn("Account disabled for email: {}", authRequest.getEmail());
-            return new ResponseEntity<>("{\"message\":\"Wait for admin approval\"}", HttpStatus.UNAUTHORIZED);
+            log.warn("Compte désactivé pour l'email : {}", authRequest.getEmail());
+            return new ResponseEntity<>("{\"message\":\"En attente de l'acceptation de l'administrateur\"}",
+                    HttpStatus.UNAUTHORIZED);
         } catch (BadCredentialsException ex) {
-            log.warn("Invalid credentials for email: {}", authRequest.getEmail());
-            return new ResponseEntity<>("{\"message\":\"Invalid Credentials\"}", HttpStatus.UNAUTHORIZED);
+            log.warn("Identifiants invalides pour l'email : {}", authRequest.getEmail());
+            return new ResponseEntity<>("{\"message\":\"Identifiants invalides\"}", HttpStatus.UNAUTHORIZED);
         } catch (UsernameNotFoundException ex) {
-            log.error("User not found: {}", authRequest.getEmail());
-            throw ex;
+            log.error("Utilisateur non trouvé : {}", authRequest.getEmail());
+            return new ResponseEntity<>("{\"message\":\"Utilisateur non trouvé\"}", HttpStatus.NOT_FOUND);
         } catch (Exception ex) {
-            log.error("Error during login for email {}: {}", authRequest.getEmail(), ex.getMessage(), ex);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur lors de la connexion pour l'email {} : {}", authRequest.getEmail(), ex.getMessage(), ex);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public ResponseEntity<?> getAllAppuser() {
-        log.info("Fetching all app users for email: {}", jwtAuthFilter.getEmail());
+        log.info("Récupération de tous les utilisateurs pour l'email : {}", jwtAuthFilter.getEmail());
         try {
             return new ResponseEntity<>(userInfoRepository.getAllAppuser(jwtAuthFilter.getEmail()), HttpStatus.OK);
         } catch (Exception ex) {
-            log.error("Error while fetching all app users: {}", ex.getMessage(), ex);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur lors de la récupération de tous les utilisateurs : {}", ex.getMessage(), ex);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public ResponseEntity<?> getAllTechniciens() {
-        log.info("Fetching all active technicians");
+        log.info("Récupération de tous les techniciens actifs");
         try {
             List<UserInfo> techniciens = userInfoRepository.findActiveTechniciens();
+            if (techniciens.isEmpty()) {
+                log.info("Aucun technicien actif trouvé");
+                return new ResponseEntity<>("{\"message\":\"Aucun technicien actif trouvé\"}", HttpStatus.OK);
+            }
             return new ResponseEntity<>(techniciens, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error while fetching technicians: {}", e.getMessage(), e);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur lors de la récupération des techniciens : {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public ResponseEntity<?> updateAppuser(Long id, UserInfo updatedUser) {
-        log.info("Updating user with ID: {}", id);
+        log.info("Mise à jour de l'utilisateur avec l'ID : {}", id);
         try {
             Optional<UserInfo> optionalUser = userInfoRepository.findByIdAndArchiverFalse(id);
             if (optionalUser.isEmpty()) {
-                log.warn("User not found or archived with ID: {}", id);
-                return new ResponseEntity<>("{\"message\":\"User not found or archived\"}", HttpStatus.NOT_FOUND);
+                log.warn("Utilisateur non trouvé ou archivé avec l'ID : {}", id);
+                return new ResponseEntity<>("{\"message\":\"Utilisateur non trouvé ou déjà archivé\"}",
+                        HttpStatus.NOT_FOUND);
+            }
+            if (updatedUser == null) {
+                log.warn("Aucune donnée utilisateur fournie pour la mise à jour de l'ID : {}", id);
+                return new ResponseEntity<>("{\"message\":\"Aucune donnée utilisateur fournie pour la mise à jour\"}",
+                        HttpStatus.BAD_REQUEST);
             }
             if (updatedUser.getEmail() != null) {
                 Optional<UserInfo> db = userInfoRepository.findByEmailAndArchiverFalse(updatedUser.getEmail());
                 if (db.isPresent() && !db.get().getId().equals(id)) {
-                    log.warn("Email already exists: {}", updatedUser.getEmail());
-                    return new ResponseEntity<>("{\"message\":\"Email already exists\"}", HttpStatus.BAD_REQUEST);
+                    log.warn("L'email existe déjà : {}", updatedUser.getEmail());
+                    return new ResponseEntity<>("{\"message\":\"Cet email existe déjà\"}", HttpStatus.BAD_REQUEST);
                 }
             }
             UserInfo user = optionalUser.get();
@@ -277,8 +298,8 @@ public class UserInfoServiceImpl implements UserInfoService {
             if (updatedUser.getRole() != null && updatedUser.getRole().getId() != null) {
                 Optional<Role> roleOpt = roleRepository.findById(updatedUser.getRole().getId());
                 if (roleOpt.isEmpty()) {
-                    log.warn("Role not found with ID: {}", updatedUser.getRole().getId());
-                    return new ResponseEntity<>("{\"message\":\"Role not found\"}", HttpStatus.BAD_REQUEST);
+                    log.warn("Rôle non trouvé avec l'ID : {}", updatedUser.getRole().getId());
+                    return new ResponseEntity<>("{\"message\":\"Rôle non trouvé\"}", HttpStatus.BAD_REQUEST);
                 }
                 user.setRole(roleOpt.get());
                 currentRole = roleOpt.get();
@@ -288,27 +309,28 @@ public class UserInfoServiceImpl implements UserInfoService {
             if (updatedUser.getProduit() != null && updatedUser.getProduit().getId() != null) {
                 Optional<Produit> produitOpt = produitRepository.findById(updatedUser.getProduit().getId());
                 if (produitOpt.isEmpty()) {
-                    log.warn("Produit not found with ID: {}", updatedUser.getProduit().getId());
-                    return new ResponseEntity<>("{\"message\":\"Produit not found\"}", HttpStatus.BAD_REQUEST);
+                    log.warn("Produit non trouvé avec l'ID : {}", updatedUser.getProduit().getId());
+                    return new ResponseEntity<>("{\"message\":\"Produit non trouvé\"}", HttpStatus.BAD_REQUEST);
                 }
                 if (isClient && "Any".equalsIgnoreCase(produitOpt.get().getNom())) {
-                    log.warn("Cannot assign 'Any' product to CLIENT role");
-                    return new ResponseEntity<>("{\"message\":\"Cannot assign 'Any' product to CLIENT role\"}",
+                    log.warn("Impossible d'attribuer le produit 'Any' au rôle CLIENT");
+                    return new ResponseEntity<>(
+                            "{\"message\":\"Impossible d'attribuer le produit 'Any' au rôle CLIENT\"}",
                             HttpStatus.BAD_REQUEST);
                 }
                 user.setProduit(produitOpt.get());
                 isUpdated = true;
             } else if (isClient) {
                 if (user.getProduit() == null || "Any".equalsIgnoreCase(user.getProduit().getNom())) {
-                    log.warn("Produit must be provided for CLIENT role");
-                    return new ResponseEntity<>("{\"message\":\"Produit must be provided for CLIENT role\"}",
+                    log.warn("Le produit doit être fourni pour le rôle CLIENT");
+                    return new ResponseEntity<>("{\"message\":\"Le produit doit être fourni pour le rôle CLIENT\"}",
                             HttpStatus.BAD_REQUEST);
                 }
             } else {
                 Optional<Produit> anyProduitOpt = produitRepository.findByNomAndArchiverFalse("Any");
                 if (anyProduitOpt.isEmpty()) {
-                    log.error("Default 'Any' product not found");
-                    return new ResponseEntity<>("{\"message\":\"Default 'Any' product not found\"}",
+                    log.error("Produit par défaut 'Any' non trouvé");
+                    return new ResponseEntity<>("{\"message\":\"Produit par défaut 'Any' non trouvé\"}",
                             HttpStatus.INTERNAL_SERVER_ERROR);
                 }
                 user.setProduit(anyProduitOpt.get());
@@ -319,34 +341,36 @@ public class UserInfoServiceImpl implements UserInfoService {
                 isUpdated = true;
             }
             if (!isUpdated) {
-                log.warn("No valid fields provided for update for user ID: {}", id);
-                return new ResponseEntity<>("{\"message\":\"No valid fields provided for update\"}",
+                log.warn("Aucun champ valide fourni pour la mise à jour de l'utilisateur avec l'ID : {}", id);
+                return new ResponseEntity<>("{\"message\":\"Aucun champ valide fourni pour la mise à jour\"}",
                         HttpStatus.BAD_REQUEST);
             }
             user.setArchiver(false);
             userInfoRepository.save(user);
-            log.info("User updated successfully with ID: {}", id);
-            return new ResponseEntity<>("{\"message\":\"User updated successfully\"}", HttpStatus.OK);
+            log.info("Utilisateur mis à jour avec succès avec l'ID : {}", id);
+            return new ResponseEntity<>("{\"message\":\"Utilisateur mis à jour avec succès\"}", HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error updating user with ID {}: {}", id, e.getMessage(), e);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur lors de la mise à jour de l'utilisateur avec l'ID {} : {}", id, e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public ResponseEntity<?> archiveAppuser(Long id) {
-        log.info("Archiving user with ID: {}", id);
+        log.info("Archivage de l'utilisateur avec l'ID : {}", id);
         try {
             Optional<UserInfo> optionalUser = userInfoRepository.findByIdAndArchiverFalse(id);
             if (optionalUser.isEmpty()) {
-                log.warn("User not found or already archived with ID: {}", id);
-                return new ResponseEntity<>("{\"message\":\"User not found or already archived\"}",
+                log.warn("Utilisateur non trouvé ou déjà archivé avec l'ID : {}", id);
+                return new ResponseEntity<>("{\"message\":\"Utilisateur non trouvé ou déjà archivé\"}",
                         HttpStatus.NOT_FOUND);
             }
             UserInfo user = optionalUser.get();
             if (!"true".equals(user.getIsDeletable())) {
-                log.warn("User is not archivable with ID: {}", id);
-                return new ResponseEntity<>("{\"message\":\"User is not archivable\"}", HttpStatus.BAD_REQUEST);
+                log.warn("L'utilisateur n'est pas archivable avec l'ID : {}", id);
+                return new ResponseEntity<>("{\"message\":\"Cet utilisateur ne peut pas être archivé\"}",
+                        HttpStatus.BAD_REQUEST);
             }
             user.setArchiver(true);
             user.setStatus("false");
@@ -364,100 +388,112 @@ public class UserInfoServiceImpl implements UserInfoService {
                     rdvRepository.save(rdv);
                 }
             }
-            log.info("User and related entities archived successfully with ID: {}", id);
-            return new ResponseEntity<>("{\"message\":\"User and related entities archived successfully\"}",
+            log.info("Utilisateur et entités associées archivés avec succès avec l'ID : {}", id);
+            return new ResponseEntity<>("{\"message\":\"Utilisateur et entités associées archivés avec succès\"}",
                     HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error archiving user with ID {}: {}", id, e.getMessage(), e);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur lors de l'archivage de l'utilisateur avec l'ID {} : {}", id, e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public ResponseEntity<?> checkToken() {
-        log.info("Checking token validity");
-        return new ResponseEntity<>("{\"message\":\"true\"}", HttpStatus.OK);
+        log.info("Vérification de la validité du jeton");
+        return new ResponseEntity<>("{\"message\":\"Jeton valide\"}", HttpStatus.OK);
     }
 
     @Override
     public ResponseEntity<?> toggleStatus(Long id) {
-        log.info("Toggling status for user with ID: {}", id);
+        log.info("Changement de statut pour l'utilisateur avec l'ID : {}", id);
         try {
             Optional<UserInfo> optionalUser = userInfoRepository.findByIdAndArchiverFalse(id);
             if (optionalUser.isEmpty()) {
-                log.warn("User not found or archived with ID: {}", id);
-                return new ResponseEntity<>("{\"message\":\"User not found or archived\"}", HttpStatus.NOT_FOUND);
+                log.warn("Utilisateur non trouvé ou archivé avec l'ID : {}", id);
+                return new ResponseEntity<>("{\"message\":\"Utilisateur non trouvé ou déjà archivé\"}",
+                        HttpStatus.NOT_FOUND);
             }
             UserInfo user = optionalUser.get();
             user.setStatus("true".equals(user.getStatus()) ? "false" : "true");
             userInfoRepository.save(user);
-            log.info("User status toggled successfully for ID: {}", id);
-            return new ResponseEntity<>("{\"message\":\"User status toggled successfully\"}", HttpStatus.OK);
+            log.info("Statut de l'utilisateur changé avec succès pour l'ID : {}", id);
+            return new ResponseEntity<>("{\"message\":\"Statut de l'utilisateur changé avec succès\"}", HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error toggling user status for ID {}: {}", id, e.getMessage(), e);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur lors du changement de statut de l'utilisateur pour l'ID {} : {}", id, e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public ResponseEntity<?> getAllArchivedUsers() {
-        log.info("Fetching all archived users");
+        log.info("Récupération de tous les utilisateurs archivés");
         try {
             List<UserInfo> users = userInfoRepository.findByArchiverTrue();
+            if (users.isEmpty()) {
+                log.info("Aucun utilisateur archivé trouvé");
+                return new ResponseEntity<>("{\"message\":\"Aucun utilisateur archivé trouvé\"}", HttpStatus.OK);
+            }
             return new ResponseEntity<>(users, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error while retrieving archived users: {}", e.getMessage(), e);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur lors de la récupération des utilisateurs archivés : {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public ResponseEntity<?> unarchiveAppuser(Long id) {
-        log.info("Unarchiving user with ID: {}", id);
+        log.info("Désarchivage de l'utilisateur avec l'ID : {}", id);
         try {
             Optional<UserInfo> optionalUser = userInfoRepository.findById(id);
             if (optionalUser.isEmpty()) {
-                log.warn("User not found with ID: {}", id);
-                return new ResponseEntity<>("{\"message\":\"User not found\"}", HttpStatus.NOT_FOUND);
+                log.warn("Utilisateur non trouvé avec l'ID : {}", id);
+                return new ResponseEntity<>("{\"message\":\"Utilisateur non trouvé\"}", HttpStatus.NOT_FOUND);
             }
             UserInfo user = optionalUser.get();
             if (!user.isArchiver()) {
-                log.warn("User is not archived with ID: {}", id);
-                return new ResponseEntity<>("{\"message\":\"User is not archived\"}", HttpStatus.BAD_REQUEST);
+                log.warn("L'utilisateur n'est pas archivé avec l'ID : {}", id);
+                return new ResponseEntity<>("{\"message\":\"Cet utilisateur n'est pas archivé\"}",
+                        HttpStatus.BAD_REQUEST);
             }
             // Check if service and produit are not archived
             if (user.getService().isArchiver()) {
-                log.warn("Cannot unarchive user with ID {}: Service is archived", id);
-                return new ResponseEntity<>("{\"message\":\"Cannot unarchive user: Service is archived\"}",
+                log.warn("Impossible de désarchiver l'utilisateur avec l'ID {} : le service est archivé", id);
+                return new ResponseEntity<>(
+                        "{\"message\":\"Impossible de désarchiver l'utilisateur : le service est archivé\"}",
                         HttpStatus.BAD_REQUEST);
             }
             if (user.getProduit().isArchiver()) {
-                log.warn("Cannot unarchive user with ID {}: Produit is archived", id);
-                return new ResponseEntity<>("{\"message\":\"Cannot unarchive user: Produit is archived\"}",
+                log.warn("Impossible de désarchiver l'utilisateur avec l'ID {} : le produit est archivé", id);
+                return new ResponseEntity<>(
+                        "{\"message\":\"Impossible de désarchiver l'utilisateur : le produit est archivé\"}",
                         HttpStatus.BAD_REQUEST);
             }
             user.setArchiver(false);
             userInfoRepository.save(user);
-            log.info("User unarchived successfully with ID: {}", id);
-            return new ResponseEntity<>("{\"message\":\"User unarchived successfully\"}", HttpStatus.OK);
+            log.info("Utilisateur désarchivé avec succès avec l'ID : {}", id);
+            return new ResponseEntity<>("{\"message\":\"Utilisateur désarchivé avec succès\"}", HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error while unarchiving user with ID {}: {}", id, e.getMessage(), e);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur lors du désarchivage de l'utilisateur avec l'ID {} : {}", id, e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public ResponseEntity<?> forgotPassword(String email) {
-        log.info("Processing forgot password request for email: {}", email);
+        log.info("Traitement de la demande de réinitialisation de mot de passe pour l'email : {}", email);
         try {
             if (!StringUtils.hasText(email)) {
-                log.warn("Email is empty or null");
-                return new ResponseEntity<>("{\"message\":\"Email is required\"}", HttpStatus.BAD_REQUEST);
+                log.warn("L'email est vide ou null");
+                return new ResponseEntity<>("{\"message\":\"L'email est requis\"}", HttpStatus.BAD_REQUEST);
             }
             Optional<UserInfo> optionalUser = userInfoRepository.findByEmailAndArchiverFalse(email.toLowerCase());
             if (optionalUser.isEmpty()) {
-                log.warn("User not found with email: {}", email);
-                return new ResponseEntity<>("{\"message\":\"User not found\"}", HttpStatus.NOT_FOUND);
+                log.warn("Utilisateur non trouvé avec l'email : {}", email);
+                return new ResponseEntity<>("{\"message\":\"Utilisateur non trouvé\"}", HttpStatus.NOT_FOUND);
             }
             UserInfo user = optionalUser.get();
             // Generate a reset token
@@ -466,10 +502,11 @@ public class UserInfoServiceImpl implements UserInfoService {
             user.setResetTokenExpiry(LocalDateTime.now().plusHours(1)); // Token expires in 1 hour
             try {
                 userInfoRepository.save(user);
-                log.info("Reset token saved for user: {}", email);
+                log.info("Jeton de réinitialisation enregistré pour l'utilisateur : {}", email);
             } catch (Exception e) {
-                log.error("Failed to save reset token for user {}: {}", email, e.getMessage(), e);
-                return new ResponseEntity<>("{\"message\":\"Failed to save reset token\"}",
+                log.error("Échec de l'enregistrement du jeton de réinitialisation pour l'utilisateur {} : {}", email,
+                        e.getMessage(), e);
+                return new ResponseEntity<>("{\"message\":\"Échec de l'enregistrement du jeton de réinitialisation\"}",
                         HttpStatus.INTERNAL_SERVER_ERROR);
             }
             // Send HTML email with a styled button
@@ -531,51 +568,155 @@ public class UserInfoServiceImpl implements UserInfoService {
             helper.setText(htmlContent, true); // true indicates HTML content
             try {
                 mailSender.send(message);
-                log.info("Password reset email with styled button sent successfully to: {}", email);
+                log.info("Email de réinitialisation de mot de passe envoyé avec succès à : {}", email);
             } catch (MailSendException e) {
-                log.error("Failed to send password reset email to {}: {}", email, e.getMessage(), e);
-                return new ResponseEntity<>("{\"message\":\"Failed to send password reset email\"}",
+                log.error("Échec de l'envoi de l'email de réinitialisation de mot de passe à {} : {}", email,
+                        e.getMessage(), e);
+                return new ResponseEntity<>(
+                        "{\"message\":\"Échec de l'envoi de l'email de réinitialisation de mot de passe\"}",
                         HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            return new ResponseEntity<>("{\"message\":\"Password reset email sent successfully\"}", HttpStatus.OK);
+            return new ResponseEntity<>(
+                    "{\"message\":\"Email de réinitialisation de mot de passe envoyé avec succès\"}", HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Unexpected error in forgotPassword for email {}: {}", email, e.getMessage(), e);
-            return new ResponseEntity<>("{\"message\":\"Unexpected error occurred\"}",
+            log.error("Erreur inattendue dans forgotPassword pour l'email {} : {}", email, e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur inattendue s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> sendWelcomeEmail(String email) {
+        log.info("Traitement de l'envoi de l'email de bienvenue pour l'email : {}", email);
+        try {
+            if (!StringUtils.hasText(email)) {
+                log.warn("L'email est vide ou null");
+                return new ResponseEntity<>("{\"message\":\"L'email est requis\"}", HttpStatus.BAD_REQUEST);
+            }
+            Optional<UserInfo> optionalUser = userInfoRepository.findByEmailAndArchiverFalse(email.toLowerCase());
+            if (optionalUser.isEmpty()) {
+                log.warn("Utilisateur non trouvé avec l'email : {}", email);
+                return new ResponseEntity<>("{\"message\":\"Utilisateur non trouvé\"}", HttpStatus.NOT_FOUND);
+            }
+            UserInfo user = optionalUser.get();
+            // Generate a reset token
+            String resetToken = UUID.randomUUID().toString();
+            user.setResetToken(resetToken);
+            user.setResetTokenExpiry(LocalDateTime.now().plusHours(1)); // Token expires in 1 hour
+            try {
+                userInfoRepository.save(user);
+                log.info("Jeton de réinitialisation enregistré pour l'utilisateur : {}", email);
+            } catch (Exception e) {
+                log.error("Échec de l'enregistrement du jeton de réinitialisation pour l'utilisateur {} : {}", email,
+                        e.getMessage(), e);
+                return new ResponseEntity<>("{\"message\":\"Échec de l'enregistrement du jeton de réinitialisation\"}",
+                        HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            // Send HTML email with a styled button for welcome message
+            String resetLink = "http://localhost:4200/reset-password?token=" + resetToken;
+            String userName = StringUtils.hasText(user.getName()) ? user.getName() : "Utilisateur";
+            String htmlContent = "<!DOCTYPE html>" +
+                    "<html>" +
+                    "<head>" +
+                    "<meta charset='UTF-8'>" +
+                    "<meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
+                    "</head>" +
+                    "<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; line-height: 1.6; color: #333333; background-color: #f4f4f4;'>"
+                    +
+                    "<table width='100%' cellpadding='0' cellspacing='0' style='max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px;'>"
+                    +
+                    "<tr>" +
+                    "<td style='padding: 20px; text-align: center; background-color: #1e3c72; border-top-left-radius: 8px; border-top-right-radius: 8px;'>"
+                    +
+                    "<h1 style='color: #ffffff; margin: 0; font-size: 24px;'>Bienvenue chez CSI Connecte !</h1>" +
+                    "</td>" +
+                    "</tr>" +
+                    "<tr>" +
+                    "<td style='padding: 30px;'>" +
+                    "<p style='font-size: 16px; margin: 0 0 20px;'>Bonjour " + userName + ",</p>" +
+                    "<p style='font-size: 16px; margin: 0 0 20px;'>Votre compte a été créé avec succès. Veuillez définir votre mot de passe en cliquant sur le bouton ci-dessous :</p>"
+                    +
+                    "<table width='100%' cellpadding='0' cellspacing='0'>" +
+                    "<tr>" +
+                    "<td style='text-align: center; padding: 20px 0;'>" +
+                    "<a href='" + resetLink +
+                    "' style='display: inline-block; padding: 12px 30px; background: linear-gradient(to bottom, #1e3c72, #1e3c72); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: background 0.3s;'>"
+                    +
+                    "Définir votre mot de passe</a>" +
+                    "</td>" +
+                    "</tr>" +
+                    "</table>" +
+                    "<p style='font-size: 14px; color: #666666; margin: 20px 0 0;'>Ce lien est valide pendant 1 heure.</p>"
+                    +
+                    "<p style='font-size: 14px; color: #666666; margin: 5px 0 0;'>Si vous n'avez pas demandé la création de ce compte, veuillez nous contacter immédiatement.</p>"
+                    +
+                    "</td>" +
+                    "</tr>" +
+                    "<tr>" +
+                    "<td style='padding: 20px; text-align: center; background-color: #f8f9fa; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;'>"
+                    +
+                    "<p style='font-size: 12px; color: #666666; margin: 0;'>Cordialement,<br>L'équipe CNI</p>" +
+                    "<p style='font-size: 12px; color: #666666; margin: 10px 0 0;'>Contactez-nous : <a href='mailto:support@cni.com' style='color: #1e3c72; text-decoration: none;'>support@cni.com</a></p>"
+                    +
+                    "</td>" +
+                    "</tr>" +
+                    "</table>" +
+                    "</body>" +
+                    "</html>";
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(user.getEmail());
+            helper.setSubject("Bienvenue chez CNI - Définissez votre mot de passe");
+            helper.setText(htmlContent, true); // true indicates HTML content
+            try {
+                mailSender.send(message);
+                log.info("Email de bienvenue envoyé avec succès à : {}", email);
+            } catch (MailSendException e) {
+                log.error("Échec de l'envoi de l'email de bienvenue à {} : {}", email, e.getMessage(), e);
+                return new ResponseEntity<>("{\"message\":\"Échec de l'envoi de l'email de bienvenue\"}",
+                        HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            return new ResponseEntity<>("{\"message\":\"Email de bienvenue envoyé avec succès\"}", HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Erreur inattendue dans sendWelcomeEmail pour l'email {} : {}", email, e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur inattendue s'est produite\"}",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public ResponseEntity<?> resetPassword(String token, String newPassword) {
-        log.info("Processing reset password request with token: {}", token);
+        log.info("Traitement de la réinitialisation de mot de passe avec le jeton : {}", token);
         try {
             if (!StringUtils.hasText(token) || !StringUtils.hasText(newPassword)) {
-                log.warn("Token or new password is empty");
-                return new ResponseEntity<>("{\"message\":\"Token and new password are required\"}",
+                log.warn("Le jeton ou le nouveau mot de passe est vide");
+                return new ResponseEntity<>("{\"message\":\"Le jeton et le nouveau mot de passe sont requis\"}",
                         HttpStatus.BAD_REQUEST);
             }
             Optional<UserInfo> optionalUser = userInfoRepository.findByResetToken(token);
             if (optionalUser.isEmpty()) {
-                log.warn("Invalid or expired token: {}", token);
-                return new ResponseEntity<>("{\"message\":\"Invalid or expired token\"}", HttpStatus.BAD_REQUEST);
+                log.warn("Jeton invalide ou expiré : {}", token);
+                return new ResponseEntity<>("{\"message\":\"Jeton invalide ou expiré\"}", HttpStatus.BAD_REQUEST);
             }
             UserInfo user = optionalUser.get();
             if (user.getResetTokenExpiry() == null || user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
                 user.setResetToken(null);
                 user.setResetTokenExpiry(null);
                 userInfoRepository.save(user);
-                log.warn("Token has expired for user: {}", user.getEmail());
-                return new ResponseEntity<>("{\"message\":\"Token has expired\"}", HttpStatus.BAD_REQUEST);
+                log.warn("Le jeton a expiré pour l'utilisateur : {}", user.getEmail());
+                return new ResponseEntity<>("{\"message\":\"Le jeton a expiré\"}", HttpStatus.BAD_REQUEST);
             }
             user.setPassword(passwordEncoder.encode(newPassword));
             user.setResetToken(null);
             user.setResetTokenExpiry(null);
             userInfoRepository.save(user);
-            log.info("Password reset successfully for user: {}", user.getEmail());
-            return new ResponseEntity<>("{\"message\":\"Password reset successfully\"}", HttpStatus.OK);
+            log.info("Mot de passe réinitialisé avec succès pour l'utilisateur : {}", user.getEmail());
+            return new ResponseEntity<>("{\"message\":\"Mot de passe réinitialisé avec succès\"}", HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Error in resetPassword: {}", e.getMessage(), e);
-            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Erreur dans resetPassword : {}", e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Une erreur s'est produite\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

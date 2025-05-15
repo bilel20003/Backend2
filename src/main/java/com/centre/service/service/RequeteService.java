@@ -3,10 +3,11 @@ package com.centre.service.service;
 import com.centre.service.model.Requete;
 import com.centre.service.model.UserInfo;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface RequeteService {
 
-    ResponseEntity<?> addRequete(Requete requete);
+    ResponseEntity<?> addRequete(Requete requete, MultipartFile[] files);
 
     ResponseEntity<?> getAllRequetes();
 
@@ -25,4 +26,6 @@ public interface RequeteService {
     ResponseEntity<?> getAllArchivedRequetes();
 
     ResponseEntity<?> unarchiveRequete(Long id);
+
+    ResponseEntity<?> downloadPieceJointe(Long pieceJointeId);
 }

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import com.centre.service.model.AuthRequest;
 import com.centre.service.model.UserInfo;
@@ -127,6 +128,17 @@ public class UserInfoRestImpl implements UserInfoRest {
             return userInfoService.resetPassword(token, newPassword);
         } catch (Exception ex) {
             log.error("Error in resetPassword: {}", ex);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> sendWelcomeEmail(Map<String, String> request) {
+        try {
+            String email = request.get("email");
+            return userInfoService.sendWelcomeEmail(email);
+        } catch (Exception ex) {
+            log.error("Error in sendWelcomeEmail: {}", ex);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

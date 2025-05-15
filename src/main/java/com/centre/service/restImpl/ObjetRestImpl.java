@@ -1,6 +1,7 @@
 package com.centre.service.restImpl;
 
 import com.centre.service.model.Objet;
+import com.centre.service.model.ObjetType;
 import com.centre.service.rest.ObjetRest;
 import com.centre.service.service.ObjetService;
 import org.slf4j.Logger;
@@ -64,6 +65,26 @@ public class ObjetRestImpl implements ObjetRest {
             return objetService.archiveObjet(id);
         } catch (Exception ex) {
             log.error("Error in archiveObjet: {}", ex.getMessage(), ex);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> getObjetsByProduitIdAndType(Long produitId, ObjetType type) {
+        try {
+            return objetService.getObjetsByProduitIdAndType(produitId, type);
+        } catch (Exception ex) {
+            log.error("Error in getObjetsByProduitIdAndType: {}", ex.getMessage(), ex);
+            return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> getObjetsByProduitId(Long produitId) {
+        try {
+            return objetService.getObjetsByProduitId(produitId);
+        } catch (Exception ex) {
+            log.error("Error in getObjetsByProduitId: {}", ex.getMessage(), ex);
             return new ResponseEntity<>("{\"message\":\"Something went wrong\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

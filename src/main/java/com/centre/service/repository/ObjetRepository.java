@@ -1,6 +1,8 @@
 package com.centre.service.repository;
 
 import com.centre.service.model.Objet;
+import com.centre.service.model.ObjetType;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,4 +24,10 @@ public interface ObjetRepository extends JpaRepository<Objet, Long> {
     List<Objet> findByArchiverTrue();
 
     Optional<Objet> findById(Long id);
+
+    // New method to get objects by product and type
+    List<Objet> findByProduitIdAndArchiverFalseAndType(Long produitId, ObjetType type);
+
+    // New method to get all objects for a product (for rendezvous and requetes)
+    List<Objet> findByProduitIdAndArchiverFalse(Long produitId);
 }

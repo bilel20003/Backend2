@@ -35,4 +35,6 @@ public interface UserInfoService {
     ResponseEntity<?> forgotPassword(String email);
 
     ResponseEntity<?> resetPassword(String token, String newPassword);
+
+    ResponseEntity<?> sendWelcomeEmail(String email); // Nouvelle méthode pour l'email de bienvenue
 }

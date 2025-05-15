@@ -94,7 +94,7 @@ public class DataLoader implements ApplicationRunner {
             UserInfo admin = new UserInfo();
             admin.setName("admin");
             admin.setEmail("admin@email.com");
-            admin.setPassword(passwordEncoder.encode("admin"));
+            admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setIsDeletable("false");
             admin.setStatus("true");
             admin.setRole(adminRole);

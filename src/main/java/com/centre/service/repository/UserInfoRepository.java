@@ -14,7 +14,8 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Long> {
 
     Optional<UserInfo> findByEmailAndArchiverFalse(String email);
 
-    @Query("SELECT new com.centre.service.model.UserInfo(u.id, u.name, u.email, u.status, u.role, u.service) " +
+    @Query("SELECT new com.centre.service.model.UserInfo(u.id, u.name, u.email, u.status, u.role, u.service, u.produit) "
+            +
             "FROM UserInfo u WHERE u.isDeletable = 'true' AND u.email NOT IN (:email) AND u.archiver = false " +
             "AND u.service.archiver = false AND u.produit.archiver = false")
     List<UserInfo> getAllAppuser(@Param("email") String email);

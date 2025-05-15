@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 public class RequeteRestImpl implements RequeteRest {
@@ -20,9 +21,11 @@ public class RequeteRestImpl implements RequeteRest {
     private RequeteService requeteService;
 
     @Override
-    public ResponseEntity<?> addRequete(Requete requete) {
+    public ResponseEntity<?> addRequete(Requete requete, MultipartFile[] files) {
         try {
-            return requeteService.addRequete(requete);
+            log.info("Received request to add requete with files: {}, files count: {}", requete,
+                    files != null ? files.length : 0);
+            return requeteService.addRequete(requete, files);
         } catch (Exception e) {
             log.error("Error adding requete: {}", e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Error adding requete\"}", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -102,6 +105,17 @@ public class RequeteRestImpl implements RequeteRest {
         } catch (Exception e) {
             log.error("Error archiving requete with id {}: {}", id, e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Error archiving requete\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> downloadPieceJointe(Long pieceJointeId) {
+        try {
+            return requeteService.downloadPieceJointe(pieceJointeId);
+        } catch (Exception e) {
+            log.error("Error downloading piece jointe with id {}: {}", pieceJointeId, e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Error downloading piece jointe\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

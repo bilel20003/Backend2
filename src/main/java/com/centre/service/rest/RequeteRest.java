@@ -3,6 +3,7 @@ package com.centre.service.rest;
 import com.centre.service.model.Requete;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RequestMapping(path = "/api/requetes")
 public interface RequeteRest {
@@ -19,8 +20,10 @@ public interface RequeteRest {
     @GetMapping("/technicien/{technicienId}")
     ResponseEntity<?> getRequetesByTechnicien(@PathVariable Long technicienId);
 
-    @PostMapping("/addrequete")
-    ResponseEntity<?> addRequete(@RequestBody Requete requete);
+    @PostMapping(value = "/addrequete", consumes = { "multipart/form-data" })
+    ResponseEntity<?> addRequete(
+            @RequestPart("requete") Requete requete,
+            @RequestPart(value = "files", required = false) MultipartFile[] files);
 
     @GetMapping("/guichetier/least")
     ResponseEntity<?> getGuichetierWithLeastRequests();
@@ -30,4 +33,7 @@ public interface RequeteRest {
 
     @PutMapping("/archiverequete/{id}")
     ResponseEntity<?> archiveRequete(@PathVariable Long id);
+
+    @GetMapping("/download/{pieceJointeId}")
+    ResponseEntity<?> downloadPieceJointe(@PathVariable Long pieceJointeId);
 }

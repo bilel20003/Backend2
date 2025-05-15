@@ -6,7 +6,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "requetes")
@@ -32,7 +36,7 @@ public class Requete implements Serializable {
     private String noteRetour;
     private Date date;
 
-    private Date dateTraitement; // Fixed typo: changed from dateTraitment
+    private Date dateTraitement;
 
     @ManyToOne
     @JoinColumn(name = "objet_id", nullable = false)
@@ -52,4 +56,8 @@ public class Requete implements Serializable {
 
     @Column(nullable = false)
     private boolean archiver = false;
+
+    @OneToMany(mappedBy = "requete", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<PieceJointe> piecesJointes = new ArrayList<>();
 }

@@ -1,6 +1,7 @@
 package com.centre.service.rest;
 
 import com.centre.service.model.Objet;
+import com.centre.service.model.ObjetType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,4 +22,12 @@ public interface ObjetRest {
 
     @PutMapping("/archiveobjet/{id}")
     ResponseEntity<?> archiveObjet(@PathVariable Long id);
+
+    // New endpoint to get objects by product and type
+    @GetMapping("/getobjetsbyproduit/{produitId}/{type}")
+    ResponseEntity<?> getObjetsByProduitIdAndType(@PathVariable Long produitId, @PathVariable ObjetType type);
+
+    // New endpoint to get all objects for a product
+    @GetMapping("/getobjetsbyproduit/{produitId}")
+    ResponseEntity<?> getObjetsByProduitId(@PathVariable Long produitId);
 }

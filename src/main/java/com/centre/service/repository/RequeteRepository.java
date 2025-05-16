@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,4 +29,6 @@ public interface RequeteRepository extends JpaRepository<Requete, Long> {
     Optional<Requete> findById(Long id);
 
     List<Requete> findByObjetIdAndArchiverFalse(Long objetId);
+
+    List<Requete> findByDateBetweenAndArchiverFalse(Date startDate, Date endDate);
 }

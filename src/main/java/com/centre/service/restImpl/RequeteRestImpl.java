@@ -118,4 +118,16 @@ public class RequeteRestImpl implements RequeteRest {
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @Override
+    public ResponseEntity<?> getPieceJointeParId(Long id) {
+        try {
+            log.info("Received request to get piece jointe with ID: {}", id);
+            return requeteService.getPieceJointeParId(id);
+        } catch (Exception e) {
+            log.error("Error retrieving piece jointe with ID {}: {}", id, e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Error retrieving piece jointe\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

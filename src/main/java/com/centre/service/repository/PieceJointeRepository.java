@@ -9,4 +9,7 @@ import java.util.Optional;
 @Repository
 public interface PieceJointeRepository extends JpaRepository<PieceJointe, Long> {
     Optional<PieceJointe> findByIdAndArchiverFalse(Long id);
+
+    // Nouvelle méthode pour récupérer une pièce jointe par ID
+    Optional<PieceJointe> findPieceJointeById(Long id);
 }

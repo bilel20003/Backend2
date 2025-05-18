@@ -36,4 +36,8 @@ public interface RequeteRest {
 
     @GetMapping("/download/{pieceJointeId}")
     ResponseEntity<?> downloadPieceJointe(@PathVariable Long pieceJointeId);
+
+    // Nouvel endpoint pour récupérer une pièce jointe par ID
+    @GetMapping("/piece-jointe/{id}")
+    ResponseEntity<?> getPieceJointeParId(@PathVariable Long id);
 }

@@ -28,4 +28,7 @@ public interface RequeteService {
     ResponseEntity<?> unarchiveRequete(Long id);
 
     ResponseEntity<?> downloadPieceJointe(Long pieceJointeId);
+
+    // Nouvelle méthode pour récupérer une pièce jointe par ID
+    ResponseEntity<?> getPieceJointeParId(Long id);
 }

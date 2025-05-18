@@ -342,6 +342,7 @@ public class RequeteServiceImpl implements RequeteService {
         }
     }
 
+    @Override
     public ResponseEntity<?> getAllArchivedRequetes() {
         try {
             List<Requete> requetes = requeteRepository.findByArchiverTrue();
@@ -353,6 +354,7 @@ public class RequeteServiceImpl implements RequeteService {
         }
     }
 
+    @Override
     public ResponseEntity<?> unarchiveRequete(Long id) {
         try {
             Optional<Requete> requeteOpt = requeteRepository.findById(id);
@@ -417,6 +419,23 @@ public class RequeteServiceImpl implements RequeteService {
         } catch (Exception e) {
             log.error("Error downloading piece jointe with ID {}: {}", pieceJointeId, e.getMessage(), e);
             return new ResponseEntity<>("{\"message\":\"Error downloading piece jointe\"}",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> getPieceJointeParId(Long id) {
+        try {
+            Optional<PieceJointe> pieceJointeOpt = pieceJointeRepository.findPieceJointeById(id);
+            if (pieceJointeOpt.isEmpty()) {
+                log.error("PieceJointe with ID {} not found", id);
+                return new ResponseEntity<>("{\"message\":\"Piece jointe not found\"}", HttpStatus.NOT_FOUND);
+            }
+            PieceJointe pieceJointe = pieceJointeOpt.get();
+            return new ResponseEntity<>(pieceJointe, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Error retrieving piece jointe with ID {}: {}", id, e.getMessage(), e);
+            return new ResponseEntity<>("{\"message\":\"Error retrieving piece jointe\"}",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

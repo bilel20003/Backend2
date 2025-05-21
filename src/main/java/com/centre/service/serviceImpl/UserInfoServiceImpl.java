@@ -192,8 +192,11 @@ public class UserInfoServiceImpl implements UserInfoService {
                     new UsernamePasswordAuthenticationToken(
                             authRequest.getEmail().toLowerCase(),
                             authRequest.getPassword()));
+            log.info("Authentification réussie pour l'email : {}", authRequest.getEmail());
             if (authentication != null && authentication.isAuthenticated()) {
                 UserInfoDetails userDetails = (UserInfoDetails) authentication.getPrincipal();
+                log.info("UserDetails : email={}, role={}, status={}",
+                        userDetails.getUsername(), userDetails.getRole().getName(), userDetails.getStatus());
                 if ("true".equalsIgnoreCase(userDetails.getStatus())) {
                     String token = jwtService.generateToken(userDetails);
                     Map<String, Object> response = new HashMap<>();
@@ -213,7 +216,7 @@ public class UserInfoServiceImpl implements UserInfoService {
             return new ResponseEntity<>("{\"message\":\"En attente de l'acceptation de l'administrateur\"}",
                     HttpStatus.UNAUTHORIZED);
         } catch (BadCredentialsException ex) {
-            log.warn("Identifiants invalides pour l'email : {}", authRequest.getEmail());
+            log.warn("Identifiants invalides pour l'email : {}. Détails : {}", authRequest.getEmail(), ex.getMessage());
             return new ResponseEntity<>("{\"message\":\"Identifiants invalides\"}", HttpStatus.UNAUTHORIZED);
         } catch (UsernameNotFoundException ex) {
             log.error("Utilisateur non trouvé : {}", authRequest.getEmail());

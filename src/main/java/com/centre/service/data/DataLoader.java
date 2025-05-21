@@ -43,7 +43,7 @@ public class DataLoader implements ApplicationRunner {
         Ministere ministere = ministereRepository.findByNomMinistereAndArchiverFalse("Ministère de l'IT")
                 .orElseGet(() -> {
                     Ministere newMinistere = new Ministere();
-                    newMinistere.setNomMinistere("Ministère de l'IT");
+                    newMinistere.setNomMinistere("Ministère des Technologies de la Communication");
                     newMinistere.setArchiver(false);
                     return ministereRepository.save(newMinistere);
                 });
@@ -52,7 +52,7 @@ public class DataLoader implements ApplicationRunner {
         Servicee adminService = serviceeRepository.findByNomServiceAndArchiverFalse("Administration")
                 .orElseGet(() -> {
                     Servicee newService = new Servicee();
-                    newService.setNomService("Administration");
+                    newService.setNomService("Centre National de l'Informatique(CNI)");
                     newService.setMinistere(ministere);
                     newService.setArchiver(false);
                     return serviceeRepository.save(newService);
